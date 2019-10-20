@@ -7,7 +7,7 @@ use ieee.std_logic_unsigned.all ;
 use work.opcodes.all;
 use work.types.all;
 
-entity core is
+entity controlunit is
 	port
 	(
 		clk					: in std_logic;
@@ -45,9 +45,9 @@ entity core is
 		debug_inst_counter			: out std_logic_vector(31 downto 0)
 		
 	);
-end core;
+end controlunit;
 
-architecture ahmes of core is
+architecture behaviour of controlunit is
 
 	signal cpu_state 				: cpu_state_type;
 	signal program_counter	 		: std_logic_vector(7 downto 0);
@@ -516,4 +516,4 @@ begin
 			end case;
 		end if;
 	end process;
-end ahmes;
+end behaviour;

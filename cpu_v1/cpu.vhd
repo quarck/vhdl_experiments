@@ -28,7 +28,7 @@ end cpu;
 
 architecture structural of cpu is 
 
-	component core is
+	component controlunit is
 		port
 		(
 			clk					: in std_logic;
@@ -85,7 +85,7 @@ architecture structural of cpu is
 	signal alu_flags		: ALU_flags;
 
 begin
-	c: core port map(
+	c: controlunit port map(
 			clk					=> clk,
 			reset				=> reset,
 			error				=> error,

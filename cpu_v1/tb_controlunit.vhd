@@ -4,12 +4,12 @@ use work.opcodes.all;
 use work.types.all;
 
 
-entity TB_core is
-end TB_core;
+entity TB_controlunit is
+end TB_controlunit;
 
-architecture behavior of TB_core is
+architecture behavior of TB_controlunit is
     -- Component Declaration for the Unit Under Test (UUT)
-	component core is
+	component controlunit is
 		port
 		(
 			clk				: in std_logic;
@@ -141,7 +141,7 @@ architecture behavior of TB_core is
    constant clk_period : time := 10 ns; 
 begin
  	-- Instantiate the Unit(s) Under Test (UUT)
-	c: core port map(
+	c: controlunit port map(
 		clk			=> clk,
 		reset		=> reset,
 		error		=> error,
