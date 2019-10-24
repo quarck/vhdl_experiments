@@ -252,7 +252,7 @@ stim_proc:
    process 
    begin
 		reset_i <= '1';
-		wait for 20 ns;	
+		wait for 200 ns;	
 		reset_i <= '0';
 		wait for clk_period*400;		
 		wait;

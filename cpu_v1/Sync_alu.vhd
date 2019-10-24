@@ -13,7 +13,7 @@ entity sync_ALU is
 	port
 	(
 		clk_i					: std_logic;
-		operation				: in alu_opcode_type;
+		operation				: in std_logic_vector(3 downto 0);
 		regfile_read_port_a		: in std_logic_vector(nbits-1 downto 0);
 		regfile_read_port_b		: in std_logic_vector(nbits-1 downto 0);
 		direct_arg_port_a		: in std_logic_vector(nbits-1 downto 0);
@@ -24,7 +24,7 @@ entity sync_ALU is
 		result					: out std_logic_vector(nbits-1 downto 0);
 		flags					: out ALU_flags
 	);
-end ALU;
+end sync_ALU;
 
 
 architecture behaviour of sync_ALU is	
