@@ -72,7 +72,6 @@ architecture behaviour of controlunit is
 begin
 
 	dbg_pc_o <= program_counter;
-	debug_accumulator	 <= (others => '0');
 	dbg_ir_o <=	instruction_code;
 	dbg_state_o <= cpu_state;
 
@@ -88,8 +87,19 @@ begin
 	-- same as registers - hard-wire for REG-VAL ALU operations
 	aalu_right_val_o <= "0000" & mem_data_i(3 downto 0); 
 
-	process (clk_i, reset_i, program_counter, accumulator)
-		variable jump_state : cpu_state; 
+	process (
+		clk_i, 
+		reset_i, 
+		mem_data_i, 
+		reg_port_a_data_read_i,
+		reg_port_b_data_read_i,
+		reg_port_c_data_read_i,
+		aalu_result_i,
+		aalu_flags_i,
+		pio_data_i,
+		pio_io_ready_i
+		)
+		variable jump_state : cpu_state_type; 
 		variable jump_cond_match : boolean;
 	begin
 		if reset_i = '1' 
@@ -156,9 +166,6 @@ begin
 					instruction_code <= mem_data_i;
 				
 					case mem_data_i(7 downto 4) is 
-						when OP_NOP =>
-							cpu_state <= FETCH_0;
-
 						when OP_ST => 
 							reg_read_select_c_o <= mem_data_i(3 downto 0); -- use latched 
 							cpu_state <= EXECUTE_ST_1;
@@ -175,13 +182,13 @@ begin
 							aalu_opcode_o <= mem_data_i(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
 							aalu_right_select_o <= reg_port;
-							state <= STORE;
+							cpu_state <= STORE;
 
 						when OP_AALU_RV => 
 							aalu_opcode_o <= mem_data_i(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
 							aalu_right_select_o <= value_port;
-							state <= STORE;
+							cpu_state <= STORE;
 
 						when OP_SALU_RR | OP_SALU_RV =>
 							error_o <= '1';
@@ -200,7 +207,7 @@ begin
 							case mem_data_i(5 downto 4) is 
 								when JMP_ABS	=> 	jump_state := EXECUTE_JMP_ABS;
 								when JMP_REL	=> 	jump_state := EXECUTE_JMP_REL;
-								when JMP_R		=> 	jump_state := EXECUTE_JMP_REG_1;
+								when JMP_R		=> 	jump_state := EXECUTE_JMP_REG;
 								when others 	=> 	jump_state := STOP;
 							end case;
 							
@@ -232,6 +239,9 @@ begin
 						
 						when OP_SPECIAL_GROUP => 
 							case mem_data_i is 
+								when OP_NOP =>
+									cpu_state <= FETCH_0;
+
 								when OP_HLT =>
 									cpu_state <= STOP;
 
@@ -392,6 +402,9 @@ begin
  					end case;
  					cpu_state <= FETCH_0; 
 
+				when others => 
+					cpu_state <= STOP;
+					error_o <= '1';
 			end case;
 		end if;
 	end process;
