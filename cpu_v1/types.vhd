@@ -10,6 +10,10 @@ package types is
 		carry_out 		: std_logic; -- means "borrow out" for sub
 		overflow 		: std_logic;
 	end record ALU_flags;
+
+	type ALU_arg_select is ( reg_port, value_port );
+
+	type alu_opcode_type is std_logic_vector(3 downto 0); 	
 	
 	type cpu_state_type is (
 		
@@ -18,32 +22,33 @@ package types is
 
 		DECODE,
 		
-		EXECUTE_STA_1, 
-		EXECUTE_STA_2,
+		EXECUTE_ST_1, 
+		EXECUTE_ST_2,
 		
-		EXECUTE_LDA_MEM_1, 
-		EXECUTE_LDA_MEM_2, 
-		EXECUTE_LDA_MEM_3, 
+		EXECUTE_LD_1, 
+		EXECUTE_LD_2, 
+		EXECUTE_LD_3, 
 		
-		EXECUTE_LDA_VAL_1, 
+		EXECUTE_LD_VAL_1, 
 		
-		EXECUTE_ALU_REGMEM_1, 
-		EXECUTE_ALU_REGMEM_2, 
-		EXECUTE_ALU_REGMEM_3, 
+-- 		EXECUTE_ALU_RV,		
+-- 		EXECUTE_ALU_RR,
+		
+		EXECUTE_MOV_RR, 
+		
+		EXECUTE_MOV_RA_1, 
+		EXECUTE_MOV_RA_2, 
+		EXECUTE_MOV_RA_3, 
 
-		EXECUTE_ALU_REGMEM_INV_1, 
-		EXECUTE_ALU_REGMEM_INV_2, 
-		EXECUTE_ALU_REGMEM_INV_3, 
+		EXECUTE_MOV_AR_1, 
+		EXECUTE_MOV_AR_2, 
+
+		EXECUTE_7SEG_1,
+		EXECUTE_7SEG_2,
 		
-		EXECUTE_ALU_REGVAL_1,
-		
-		EXECUTE_ALU_REGVAL_INV_1,
-		
-		EXECUTE_SEVENSEGMENTTRANSLATE_1,
-		EXECUTE_SEVENSEGMENTTRANSLATE_2,
-		
-		EXECUTE_JMP,
-		EXECUTE_JMP_A,
+		EXECUTE_JMP_ABS,
+		EXECUTE_JMP_REL,
+		EXECUTE_JMP_REG,
 
 		EXECUTE_PORT_IN_1,
 		EXECUTE_PORT_IN_2,

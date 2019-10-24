@@ -3,110 +3,142 @@ use ieee.std_logic_1164.all ;
 
 
 package opcodes is
+ 	
+	-- high bit set to 0 - simple operations, async ALU 
+ 	constant ALU_NOP  : alu_opcode_type := "0000";
+ 	constant ALU_ADD  : alu_opcode_type := "0001";
+	constant ALU_ADDC : alu_opcode_type := "0010";
+ 	constant ALU_SUB  : alu_opcode_type := "0011";
+	constant ALU_SUBC : alu_opcode_type := "0100";
+ 	constant ALU_NEG  : alu_opcode_type := "0101";
+	constant ALU_OR   : alu_opcode_type := "0110";
+	constant ALU_AND  : alu_opcode_type := "0111";
+	constant ALU_XOR  : alu_opcode_type := "1000";
+	constant ALU_NOT  : alu_opcode_type := "1001";
+ 	constant ALU_SHL  : alu_opcode_type := "1010";
+ 	constant ALU_SHR  : alu_opcode_type := "1011";
+ 	constant ALU_SHAR : alu_opcode_type := "1100";
+	
+	-- heavy sync monsters taking multiple cycles to complete 
+ 	constant ALU_MUL  : alu_opcode_type := "0001";
+ 	constant ALU_IMUL : alu_opcode_type := "0010";
+ 	constant ALU_DIV  : alu_opcode_type := "0011";
+ 	constant ALU_IDIV : alu_opcode_type := "0100";
 
-	type alu_opcode_type is (
-			ALU_ADD, 		-- add
-			ALU_SUB,		-- sub Left-Right
-			-- ALU_NEG,		-- negative 
-
-			ALU_OR, 		-- bitwise OR
-			ALU_AND, 		-- .. AND
-			ALU_XOR,		-- .. XOR
-			-- ALU_NOT, 		-- .. NOT
-			
-			ALU_SHL,		-- shift left
-			ALU_SHR,		-- shift right 
-			ALU_SHAR,		-- shift-arithmetic left
-			ALU_ROL,		-- rotate left
-			ALU_ROR,		-- rotate right 
-			ALU_RCL,		-- rotate-carry-left
-			ALU_RCR,		-- rotate-carry-right
-
-			ALU_NOP			-- no operation
-		);
-		
-	type alu_value_select is (
-		ALU_REGISTER_PORT, 
-		ALU_VALUE_PORT
-	);
+	constant R0 		: std_logic_vector(4 downto 0) := "0000";
+	constant R1 		: std_logic_vector(4 downto 0) := "0001";
+	constant R2 		: std_logic_vector(4 downto 0) := "0010";
+	constant R3 		: std_logic_vector(4 downto 0) := "0011";
+	constant R4 		: std_logic_vector(4 downto 0) := "0100";
+	constant R5 		: std_logic_vector(4 downto 0) := "0101";
+	constant R6 		: std_logic_vector(4 downto 0) := "0110";
+	constant R7 		: std_logic_vector(4 downto 0) := "0111";
+	constant R8 		: std_logic_vector(4 downto 0) := "1000";
+	constant R9 		: std_logic_vector(4 downto 0) := "1001";
+	constant R10		: std_logic_vector(4 downto 0) := "1010";
+	constant R11		: std_logic_vector(4 downto 0) := "1011";
+	constant R12		: std_logic_vector(4 downto 0) := "1100";
+	constant R13		: std_logic_vector(4 downto 0) := "1101";
+	constant R14		: std_logic_vector(4 downto 0) := "1110";
+	constant R15		: std_logic_vector(4 downto 0) := "1111";
 
 	-- constant definition for various CPU instructions 
 		
-	-- load and store instructions 
-	-- prefix 001
-	constant OP_STA 		: std_logic_vector(7 downto 0):="00100000";  -- mem[arg] = A
-	constant OP_LDA 		: std_logic_vector(7 downto 0):="00100001";  -- A = mem[arg]
-	constant OP_LDC 		: std_logic_vector(7 downto 0):="00100010";  -- A = arg
+	-- load/store instructions, lower 4 bits indicate the register, second byte - addr or value
+	constant OP_ST  		: std_logic_vector(3 downto 0) := "0001";  -- mem[arg] = reg[A]
+	constant OP_LD  		: std_logic_vector(3 downto 0) := "0010";  -- reg[A] = mem[arg]
+	constant OP_LDC 		: std_logic_vector(3 downto 0) := "0011";  -- reg[A] = arg
 	
-	-- math instructions 
-	-- prefix 010
-	constant OP_ADD 		: std_logic_vector(7 downto 0):="01000000";  -- A = A + mem[arg]
-	constant OP_ADDC 		: std_logic_vector(7 downto 0):="01000010";  -- A = A + mem[arg] + carry
-	constant OP_SUB 		: std_logic_vector(7 downto 0):="01000011";  -- A = A - mem[arg]
-	constant OP_SUBC 		: std_logic_vector(7 downto 0):="01000100";  -- A = A - mem[arg] - carry
-	constant OP_SUBR 		: std_logic_vector(7 downto 0):="01000101";  -- A = mem[arg] - A
-	constant OP_SUBRC		: std_logic_vector(7 downto 0):="01000110";  -- A = mem[arg] - A - carry	
-	
-	constant OP_ADD_V 		: std_logic_vector(7 downto 0):="01010000";  -- A = A + arg
-	constant OP_ADDC_V 		: std_logic_vector(7 downto 0):="01010010";  -- A = A + arg + carry
-	constant OP_SUB_V 		: std_logic_vector(7 downto 0):="01010011";  -- A = A - arg
-	constant OP_SUBC_V 		: std_logic_vector(7 downto 0):="01010100";  -- A = A - arg - carry
-	constant OP_SUBR_V 		: std_logic_vector(7 downto 0):="01010101";  -- A = arg - A
-	constant OP_SUBRC_V 	: std_logic_vector(7 downto 0):="01010110";  -- A = arg - A - carry
-	
-	-- no need for a separate opcode for OP_NEG: equals to OP_SUBR with arg = 0
-	-- constant OP_NEG 		: std_logic_vector(7 downto 0):="01011000";  -- equals to OP_SUBR with arg = 0
-	
-	-- logical and bit instructions 
-	-- prefix 011
-	constant OP_OR  		: std_logic_vector(7 downto 0):="01100000";  -- A = A or mem[arg]
-	constant OP_AND			: std_logic_vector(7 downto 0):="01100001";  -- A = A and mem[arg]
-	constant OP_XOR			: std_logic_vector(7 downto 0):="01100010";  -- A = A xor mem[arg]
-	constant OP_SHR 		: std_logic_vector(7 downto 0):="01100011";  -- shift A right by mem[arg]
-	constant OP_SHL 		: std_logic_vector(7 downto 0):="01100100";  -- shift A left by mem[arg]
-	constant OP_SHAR 		: std_logic_vector(7 downto 0):="01100101";  -- shift A right by mem[arg]
-	constant OP_ROL 		: std_logic_vector(7 downto 0):="01100110";  -- rotate right by mem[arg]
-	constant OP_ROR 		: std_logic_vector(7 downto 0):="01100111";  -- rotate left by mem[arg]
-	constant OP_RCL 		: std_logic_vector(7 downto 0):="01101000";  -- rotate through carry right by mem[arg]
-	constant OP_RCR 		: std_logic_vector(7 downto 0):="01101001";  -- rotate through carry left by mem[arg]
+	-- Async ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
+	constant OP_AALU_RR		: std_logic_vector(3 downto 0) := "0100";
 
-	constant OP_OR_V  		: std_logic_vector(7 downto 0):="01110000";  -- A = A or arg
-	constant OP_AND_V		: std_logic_vector(7 downto 0):="01110001";  -- A = A and arg
-	constant OP_XOR_V		: std_logic_vector(7 downto 0):="01110010";  -- A = A xor arg
-	constant OP_SHR_V 		: std_logic_vector(7 downto 0):="01110011";  -- shift A right by arg
-	constant OP_SHL_V 		: std_logic_vector(7 downto 0):="01110100";  -- shift A left by arg
-	constant OP_SHAR_V 		: std_logic_vector(7 downto 0):="01110101";  -- shift A right by arg
-	constant OP_ROL_V 		: std_logic_vector(7 downto 0):="01110110";  -- rotate right by arg
-	constant OP_ROR_V 		: std_logic_vector(7 downto 0):="01110111";  -- rotate left by arg
-	constant OP_RCL_V 		: std_logic_vector(7 downto 0):="01111000";  -- rotate through carry right by arg
-	constant OP_RCR_V 		: std_logic_vector(7 downto 0):="01111001";  -- rotate through carry left by arg
+	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
+	constant OP_SALU_RR		: std_logic_vector(3 downto 0) := "0101"; 
 
-	-- constant OP_NOT_V		: std_logic_vector(7 downto 0):="11000010";  -- same as OP_XOR_V with arg = 255 
+	-- Async ALU reg-val instructions, lower 4 bits - op, second byte - reg-val
+	constant OP_AALU_RV		: std_logic_vector(3 downto 0) := "0110";
 	
+	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-val 
+	constant OP_SALU_RV		: std_logic_vector(3 downto 0) := "0111"; 
+	
+	-- move instructions between reg and reg
+	constant OP_MOVE_GROUP 	: std_logic_vector(3 downto 0) := "1000"; 
+	
+	constant MOVE_TYPE_RR : std_logic_vector(1 downto 0) := "00"; -- R <- R
+	constant MOVE_TYPE_RA : std_logic_vector(1 downto 0) := "01"; -- R <- [R]
+	constant MOVE_TYPE_AR : std_logic_vector(1 downto 0) := "10"; -- [R] <- R
+	
+	constant OP_MOVE_RR 	: std_logic_vector(7 downto 0) := OP_MOVE_GROUP & MOVE_TYPE_RR & "00"; 
+	constant OP_MOVE_RA 	: std_logic_vector(7 downto 0) := OP_MOVE_GROUP & MOVE_TYPE_RA & "00";
+	constant OP_MOVE_AR 	: std_logic_vector(7 downto 0) := OP_MOVE_GROUP & MOVE_TYPE_AR & "00";
+		
 	-- branching instructions 
-	-- prefix 100
-	constant OP_JMP 		: std_logic_vector(7 downto 0):="10000001"; -- jump to arg
-	constant OP_JMP_A		: std_logic_vector(7 downto 0):="10000000"; -- jump to arg + A
+	constant OP_JMP_FAMILY 		: std_logic_vector(1 downto 0) := "11";
+
+	-- jump type: 
+	constant JMP_ABS : std_logic_vector(1 downto 0) := "00";  -- arg is an absolute 8-bit addr 
+	constant JMP_REL : std_logic_vector(1 downto 0) := "01";  -- arg is a relative addr, jump to PC+arg
+	constant JMP_R   : std_logic_vector(1 downto 0) := "10";  -- arg points to a register + 4-bit offset 
+
 	
-	constant OP_JN  		: std_logic_vector(7 downto 0):="10000010";  -- jump to arg if negative 
-	constant OP_JP  		: std_logic_vector(7 downto 0):="10000011";	 -- jump to arg if positive 
-	constant OP_JV  		: std_logic_vector(7 downto 0):="10000101";  -- jump to arg if overflow 
-	constant OP_JNV 		: std_logic_vector(7 downto 0):="10000100";  -- jump to arg if no overflow 
-	constant OP_JZ  		: std_logic_vector(7 downto 0):="10000111";  -- jump to arg if zero
-	constant OP_JNZ 		: std_logic_vector(7 downto 0):="10000110";  -- jump to arg if non zero
-	constant OP_JC  		: std_logic_vector(7 downto 0):="10001001";  -- jump to arg if carry
-	constant OP_JNC 		: std_logic_vector(7 downto 0):="10001000";  -- jump to arg if no carry
+	constant OP_JMP_ABS_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_ABS;
+	constant OP_JMP_REL_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_REL;
+	constant OP_JMP_R_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_R;
 	
+	-- jump cond: 
+	constant JMP_UNCOND : std_logic_vector(3 downto 0) := "0000"; -- no conditions 
+	constant JMP_POS 	: std_logic_vector(3 downto 0) := "1000"; -- flags.negative = 0
+	constant JMP_NEG 	: std_logic_vector(3 downto 0) := "1001"; -- flags.negative = 1
+	constant JMP_NV 	: std_logic_vector(3 downto 0) := "1010"; -- flags.overflow = 0
+	constant JMP_V 		: std_logic_vector(3 downto 0) := "1011"; -- flags.overflow = 1
+	constant JMP_NZ 	: std_logic_vector(3 downto 0) := "1100"; -- flags.zero = 0
+	constant JMP_Z 		: std_logic_vector(3 downto 0) := "1101"; -- flags.zero = 1
+	constant JMP_NC 	: std_logic_vector(3 downto 0) := "1110"; -- flags.carry = 0
+	constant JMP_C 		: std_logic_vector(3 downto 0) := "1111"; -- flags.carry = 1
+	
+	constant OP_JMP_A_UNCOND  	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_UNCOND;
+	constant OP_JMP_A_POS 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_POS;
+	constant OP_JMP_A_NEG 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NEG;
+	constant OP_JMP_A_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NV;
+	constant OP_JMP_A_ 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_V;
+	constant OP_JMP_A_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NZ;
+	constant OP_JMP_A_ 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_Z;
+	constant OP_JMP_A_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NC;
+	constant OP_JMP_A_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_C;
+
+	constant OP_JMP_REL_UNCOND  : std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_UNCOND;
+	constant OP_JMP_REL_POS 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_POS;
+	constant OP_JMP_REL_NEG 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NEG;
+	constant OP_JMP_REL_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NV;
+	constant OP_JMP_REL_ 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_V;
+	constant OP_JMP_REL_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NZ;
+	constant OP_JMP_REL_ 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_Z;
+	constant OP_JMP_REL_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NC;
+	constant OP_JMP_REL_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_C;
+
+	constant OP_JMP_R_UNCOND  	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_UNCOND;
+	constant OP_JMP_R_POS 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_POS;
+	constant OP_JMP_R_NEG 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NEG;
+	constant OP_JMP_R_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NV;
+	constant OP_JMP_R_ 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_V;
+	constant OP_JMP_R_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NZ;
+	constant OP_JMP_R_ 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_Z;
+	constant OP_JMP_R_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NC;
+	constant OP_JMP_R_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_C;
+
 	
 	-- port i/o instructions 
-	-- prefix 101
-	constant OP_IN 			: std_logic_vector(7 downto 0):="10100000";
-	constant OP_OUT 		: std_logic_vector(7 downto 0):="10100001";
-	
+	constant OP_IN_GROUP 	: std_logic_vector(3 downto 0) := "1001"; -- R <- port
+	constant OP_OUT_GROUP 	: std_logic_vector(3 downto 0) := "1010"; -- port <- R
+
+	constant OP_UNUSED_GROUP_2 	: std_logic_vector(3 downto 0) := "1011";
+		
 	-- special instructions 
-	-- prefix 000
-	constant OP_HLT 			    : std_logic_vector(7 downto 0):="00000000";
-	constant OP_NOP 				: std_logic_vector(7 downto 0):="00000001";
-	constant OP_SEVENSEGTRANSLATE 	: std_logic_vector(7 downto 0):="00000010";
+	
+	constant OP_SPECIAL_GROUP := std_logic_vector(3 downto 0) := "0000";
+	
+	constant OP_HLT 			    : std_logic_vector(7 downto 0) := "00000000";
+	constant OP_NOP 				: std_logic_vector(7 downto 0) := "00000001";
+	constant OP_SEVENSEGTRANSLATE 	: std_logic_vector(7 downto 0) := "00000010";
 	
 end package opcodes;
