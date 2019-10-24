@@ -12,88 +12,72 @@ architecture behavior of TB_controlunit is
 	component controlunit is
 		port
 		(
-			clk				: in std_logic;
-			reset			: in std_logic;
-			error			: out std_logic;
+			clk_i					: in std_logic;
+			reset_i					: in std_logic;
+			error_o					: out std_logic;
 			
-			address_bus		: out std_logic_vector(7 downto 0);
-			data_in			: in std_logic_vector(7 downto 0);
-			data_out		: out std_logic_vector(7 downto 0);
-			mem_read		: out std_logic;
-			mem_write		: out std_logic;
+			-- memory interface 
+			mem_address_o			: out std_logic_vector(7 downto 0);
+			mem_data_i				: in std_logic_vector(7 downto 0);
+			mem_data_o				: out std_logic_vector(7 downto 0);
+			mem_read_o				: out std_logic;
+			mem_write_o				: out std_logic;
+			
+			-- regfile interface
+			reg_read_select_a_o 	: out std_logic_vector(3 downto 0); -- hard-wired to mem_data_i(7 downto 4)
+			reg_read_select_b_o 	: out std_logic_vector(3 downto 0); -- hard-wired to mem_data_i(3 downto 0)
+			reg_read_select_c_o 	: out std_logic_vector(3 downto 0); -- latched 
+			reg_write_select_o 		: out std_logic_vector(3 downto 0); -- latched 
+			reg_write_enable_o 		: out std_logic;		
+			reg_port_a_data_read_i 	: in std_logic_vector (7 downto 0); 
+			reg_port_b_data_read_i 	: in std_logic_vector (7 downto 0); 
+			reg_port_c_data_read_i 	: in std_logic_vector (7 downto 0); 
+			reg_write_data_o 		: out  std_logic_vector (7 downto 0);
 
-			alu_opcode 		: out alu_opcode_type;
-			alu_carry_in	: out std_logic;		
-			alu_left		: out std_logic_vector(7 downto 0);
-			alu_right		: out std_logic_vector(7 downto 0);
-			alu_result		: in std_logic_vector(7 downto 0);
-			alu_flags_in		: in ALU_flags;
-			
-			pio_address 	: out std_logic_vector(7 downto 0);
-			pio_data_w		: out std_logic_vector(7 downto 0); -- data entering IO port 
-			pio_data_r		: in std_logic_vector(7 downto 0);
-			pio_write_enable	: out std_logic;
-			pio_read_enable		: out std_logic;
-			pio_io_ready		: in std_logic;
-			
-			debug_program_counter		: out std_logic_vector(7 downto 0);
-			debug_accumulator	 		: out std_logic_vector(7 downto 0);
-			debug_instruction_code		: out std_logic_vector(7 downto 0); 
-			debug_cpu_state				: out cpu_state_type;
+			-- aalu control 
+			aalu_opcode_o 			: out alu_opcode_type;
+			aalu_carry_in_o			: out std_logic;		
+			aalu_right_val_o		: out std_logic_vector(7 downto 0);
+			aalu_right_select_o 	: out ALU_arg_select;
+			aalu_result_i			: in std_logic_vector(7 downto 0);
+			aalu_flags_i			: in ALU_flags;
 
-			debug_clk_counter			: out std_logic_vector(31 downto 0);
-			debug_inst_counter			: out std_logic_vector(31 downto 0)	
+			-- pio 
+			pio_address_o 			: out std_logic_vector(7 downto 0);
+			pio_data_o				: out std_logic_vector(7 downto 0); -- data entering IO port 
+			pio_data_i				: in std_logic_vector(7 downto 0);
+			pio_write_enable_o		: out std_logic;
+			pio_read_enable_o		: out std_logic;
+			pio_io_ready_i			: in std_logic;
+			
+			
+			-- debug stuff 
+			dbg_pc_o				: out std_logic_vector(7 downto 0);
+			dbg_ir_o				: out std_logic_vector(7 downto 0); 
+			dbg_state_o				: out cpu_state_type;
+			dbg_clk_cnt_o			: out std_logic_vector(31 downto 0);
+			dbg_inst_cnt_o			: out std_logic_vector(31 downto 0)
 		);
 	end component;	
 	
-	component memory
-		port(
-         clk : in  std_logic;
-         address_bus : in  std_logic_vector(7 downto 0);
-         data_write : in  std_logic_vector(7 downto 0);
-         data_read : out  std_logic_vector(7 downto 0);
-		 mem_read : in std_logic;
-         mem_write : in  std_logic;
-         rst : in  std_logic
-        );
-   end component;
-	
-	component ALU is
+	component async_ALU is
+		generic (
+			bits	: integer := 8
+		);
 		port
 		(
-			operation			: in alu_opcode_type;
-			left_arg			: in std_logic_vector(7 downto 0);
-			right_arg			: in std_logic_vector(7 downto 0);
-			carry_in			: in std_logic;
-			result				: out std_logic_vector(7 downto 0);
-			flags				: out ALU_flags
+			operation				: in alu_opcode_type;
+			regfile_read_port_a		: in std_logic_vector(nbits-1 downto 0);
+			regfile_read_port_b		: in std_logic_vector(nbits-1 downto 0);
+			direct_arg_port_b		: in std_logic_vector(nbits-1 downto 0);
+			b_val_select 			: in ALU_arg_select;
+			right_arg				: in std_logic_vector(nbits-1 downto 0);
+			carry_in				: in std_logic;
+			result					: out std_logic_vector(nbits-1 downto 0);
+			flags					: out ALU_flags
 		);
 	end component;
 	
-	component pio is 
-		port (
-			clk				: in std_logic;
-			clk_unscaled	: in std_logic;
-			rst 			: in std_logic;
-			address 	: in std_logic_vector(7 downto 0);
-			data_w		: in std_logic_vector(7 downto 0); -- data entering IO port 
-			data_r		: out std_logic_vector(7 downto 0);
-			write_enable	: in std_logic;
-			read_enable		: in std_logic;
-			io_ready		: out std_logic;
-			
-			in_port_0		: in std_logic_vector (7 downto 0); -- dp switches 
-			in_port_1		: in std_logic_vector (7 downto 0);	-- push btns
-			in_port_2		: in std_logic_vector (7 downto 0); -- pin header 6
-			in_port_3		: in std_logic_vector (7 downto 0); -- pin header 7
-
-			out_port_4			: out std_logic_vector (7 downto 0); -- individual leds
-			out_port_5			: out std_logic_vector (7 downto 0); -- 7-segment digits 
-			out_port_6			: out std_logic_vector (7 downto 0); -- 7-segment enable signals 
-			out_port_7			: out std_logic_vector (7 downto 0); -- pin header 8
-			out_port_8			: out std_logic_vector (7 downto 0) -- pin header 9
-		);
-	end component;	
 	
 	--Inputs into the core
 	signal clk			: std_logic;

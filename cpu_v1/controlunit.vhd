@@ -31,7 +31,7 @@ entity controlunit is
 		reg_write_data_o 		: out  std_logic_vector (7 downto 0);
 
 		-- aalu control 
-		aalu_opcode_o 			: out alu_opcode_type;
+		aalu_opcode_o 			: out std_logic_vector(3 downto 0);
 		aalu_carry_in_o			: out std_logic;		
 		aalu_right_val_o		: out std_logic_vector(7 downto 0);
 		aalu_right_select_o 	: out ALU_arg_select;
@@ -333,8 +333,8 @@ begin
  					cpu_state <= FETCH_0;
 				
 				when EXECUTE_JMP_REG => 
-					program_counter <= reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0))
-					cpu_state => FETCH_0;				
+					program_counter <= reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
+					cpu_state <= FETCH_0;				
 
 
 				when EXECUTE_PORT_IN_1  => 

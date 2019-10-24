@@ -8,21 +8,20 @@ use work.types.all;
 
 entity async_ALU is
 	generic (
-		bits	: integer := 8
+		nbits	: integer := 8
 	);
 	port
 	(
-		operation				: in alu_opcode_type;
+		operation				: in std_logic_vector(3 downto 0);
 		regfile_read_port_a		: in std_logic_vector(nbits-1 downto 0);
 		regfile_read_port_b		: in std_logic_vector(nbits-1 downto 0);
 		direct_arg_port_b		: in std_logic_vector(nbits-1 downto 0);
 		b_val_select 			: in ALU_arg_select;
-		right_arg				: in std_logic_vector(nbits-1 downto 0);
 		carry_in				: in std_logic;
 		result					: out std_logic_vector(nbits-1 downto 0);
 		flags					: out ALU_flags
 	);
-end ALU;
+end async_ALU;
 
 
 architecture behaviour of async_ALU is	
@@ -32,7 +31,6 @@ architecture behaviour of async_ALU is
 	constant minus_one : std_logic_vector(nbits-1 downto 0) := (0 => '0', others => '1');
 	
 	signal left_arg : std_logic_vector (nbits-1 downto 0);
-	signal left_arg_high : std_logic_vector (nbits-1 downto 0); -- only for division 
 	signal right_arg : std_logic_vector (nbits-1 downto 0);
 	
 begin
@@ -54,8 +52,6 @@ begin
 		
 		left_as_uint := to_integer(unsigned(left_arg));
 		right_as_uint := to_integer(unsigned(right_arg));
-
-		result2 <= all_zeroes; -- default value 
 
 		case operation is
 			when ALU_ADD | ALU_ADDC =>
@@ -131,7 +127,7 @@ begin
 				end if;
 
 			when others =>
-				temp := all_zeroes;
+				temp := '0' & all_zeroes;
 		end case;
 
 		if temp(nbits-1 downto 0) = all_zeroes then 

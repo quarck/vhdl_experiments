@@ -13,8 +13,6 @@ package types is
 
 	type ALU_arg_select is ( reg_port, value_port );
 
-	type alu_opcode_type is std_logic_vector(3 downto 0); 	
-	
 	type cpu_state_type is (
 		
 		FETCH_0, 

@@ -5,42 +5,42 @@ use ieee.std_logic_1164.all ;
 package opcodes is
  	
 	-- high bit set to 0 - simple operations, async ALU 
- 	constant ALU_NOP  : alu_opcode_type := "0000";
- 	constant ALU_ADD  : alu_opcode_type := "0001";
-	constant ALU_ADDC : alu_opcode_type := "0010";
- 	constant ALU_SUB  : alu_opcode_type := "0011";
-	constant ALU_SUBC : alu_opcode_type := "0100";
- 	constant ALU_NEG  : alu_opcode_type := "0101";
-	constant ALU_OR   : alu_opcode_type := "0110";
-	constant ALU_AND  : alu_opcode_type := "0111";
-	constant ALU_XOR  : alu_opcode_type := "1000";
-	constant ALU_NOT  : alu_opcode_type := "1001";
- 	constant ALU_SHL  : alu_opcode_type := "1010";
- 	constant ALU_SHR  : alu_opcode_type := "1011";
- 	constant ALU_SHAR : alu_opcode_type := "1100";
+ 	constant ALU_NOP  : std_logic_vector(3 downto 0) := "0000";
+ 	constant ALU_ADD  : std_logic_vector(3 downto 0) := "0001";
+	constant ALU_ADDC : std_logic_vector(3 downto 0) := "0010";
+ 	constant ALU_SUB  : std_logic_vector(3 downto 0) := "0011";
+	constant ALU_SUBC : std_logic_vector(3 downto 0) := "0100";
+ 	constant ALU_NEG  : std_logic_vector(3 downto 0) := "0101";
+	constant ALU_OR   : std_logic_vector(3 downto 0) := "0110";
+	constant ALU_AND  : std_logic_vector(3 downto 0) := "0111";
+	constant ALU_XOR  : std_logic_vector(3 downto 0) := "1000";
+	constant ALU_NOT  : std_logic_vector(3 downto 0) := "1001";
+ 	constant ALU_SHL  : std_logic_vector(3 downto 0) := "1010";
+ 	constant ALU_SHR  : std_logic_vector(3 downto 0) := "1011";
+ 	constant ALU_SHAR : std_logic_vector(3 downto 0) := "1100";
 	
 	-- heavy sync monsters taking multiple cycles to complete 
- 	constant ALU_MUL  : alu_opcode_type := "0001";
- 	constant ALU_IMUL : alu_opcode_type := "0010";
- 	constant ALU_DIV  : alu_opcode_type := "0011";
- 	constant ALU_IDIV : alu_opcode_type := "0100";
+ 	constant ALU_MUL  : std_logic_vector(3 downto 0) := "0001";
+ 	constant ALU_IMUL : std_logic_vector(3 downto 0) := "0010";
+ 	constant ALU_DIV  : std_logic_vector(3 downto 0) := "0011";
+ 	constant ALU_IDIV : std_logic_vector(3 downto 0) := "0100";
 
-	constant R0 		: std_logic_vector(4 downto 0) := "0000";
-	constant R1 		: std_logic_vector(4 downto 0) := "0001";
-	constant R2 		: std_logic_vector(4 downto 0) := "0010";
-	constant R3 		: std_logic_vector(4 downto 0) := "0011";
-	constant R4 		: std_logic_vector(4 downto 0) := "0100";
-	constant R5 		: std_logic_vector(4 downto 0) := "0101";
-	constant R6 		: std_logic_vector(4 downto 0) := "0110";
-	constant R7 		: std_logic_vector(4 downto 0) := "0111";
-	constant R8 		: std_logic_vector(4 downto 0) := "1000";
-	constant R9 		: std_logic_vector(4 downto 0) := "1001";
-	constant R10		: std_logic_vector(4 downto 0) := "1010";
-	constant R11		: std_logic_vector(4 downto 0) := "1011";
-	constant R12		: std_logic_vector(4 downto 0) := "1100";
-	constant R13		: std_logic_vector(4 downto 0) := "1101";
-	constant R14		: std_logic_vector(4 downto 0) := "1110";
-	constant R15		: std_logic_vector(4 downto 0) := "1111";
+	constant R0 		: std_logic_vector(3 downto 0) := "0000";
+	constant R1 		: std_logic_vector(3 downto 0) := "0001";
+	constant R2 		: std_logic_vector(3 downto 0) := "0010";
+	constant R3 		: std_logic_vector(3 downto 0) := "0011";
+	constant R4 		: std_logic_vector(3 downto 0) := "0100";
+	constant R5 		: std_logic_vector(3 downto 0) := "0101";
+	constant R6 		: std_logic_vector(3 downto 0) := "0110";
+	constant R7 		: std_logic_vector(3 downto 0) := "0111";
+	constant R8 		: std_logic_vector(3 downto 0) := "1000";
+	constant R9 		: std_logic_vector(3 downto 0) := "1001";
+	constant R10		: std_logic_vector(3 downto 0) := "1010";
+	constant R11		: std_logic_vector(3 downto 0) := "1011";
+	constant R12		: std_logic_vector(3 downto 0) := "1100";
+	constant R13		: std_logic_vector(3 downto 0) := "1101";
+	constant R14		: std_logic_vector(3 downto 0) := "1110";
+	constant R15		: std_logic_vector(3 downto 0) := "1111";
 
 	-- constant definition for various CPU instructions 
 		
@@ -81,9 +81,9 @@ package opcodes is
 	constant JMP_R   : std_logic_vector(1 downto 0) := "10";  -- arg points to a register + 4-bit offset 
 
 	
-	constant OP_JMP_ABS_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_ABS;
-	constant OP_JMP_REL_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_REL;
-	constant OP_JMP_R_GROUP 	: std_logic_vector(1 downto 0) := OP_JMP_FAMILY & JMP_R;
+	constant OP_JMP_ABS_GROUP 	: std_logic_vector(3 downto 0) := OP_JMP_FAMILY & JMP_ABS;
+	constant OP_JMP_REL_GROUP 	: std_logic_vector(3 downto 0) := OP_JMP_FAMILY & JMP_REL;
+	constant OP_JMP_R_GROUP 	: std_logic_vector(3 downto 0) := OP_JMP_FAMILY & JMP_R;
 	
 	-- jump cond: 
 	constant JMP_UNCOND : std_logic_vector(3 downto 0) := "0000"; -- no conditions 
@@ -100,9 +100,9 @@ package opcodes is
 	constant OP_JMP_A_POS 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_POS;
 	constant OP_JMP_A_NEG 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NEG;
 	constant OP_JMP_A_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NV;
-	constant OP_JMP_A_ 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_V;
+	constant OP_JMP_A_V 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_V;
 	constant OP_JMP_A_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NZ;
-	constant OP_JMP_A_ 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_Z;
+	constant OP_JMP_A_Z 		 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_Z;
 	constant OP_JMP_A_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_NC;
 	constant OP_JMP_A_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_ABS & JMP_C;
 
@@ -110,9 +110,9 @@ package opcodes is
 	constant OP_JMP_REL_POS 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_POS;
 	constant OP_JMP_REL_NEG 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NEG;
 	constant OP_JMP_REL_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NV;
-	constant OP_JMP_REL_ 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_V;
+	constant OP_JMP_REL_V 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_V;
 	constant OP_JMP_REL_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NZ;
-	constant OP_JMP_REL_ 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_Z;
+	constant OP_JMP_REL_Z 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_Z;
 	constant OP_JMP_REL_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_NC;
 	constant OP_JMP_REL_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_REL & JMP_C;
 
@@ -120,9 +120,9 @@ package opcodes is
 	constant OP_JMP_R_POS 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_POS;
 	constant OP_JMP_R_NEG 		: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NEG;
 	constant OP_JMP_R_NV 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NV;
-	constant OP_JMP_R_ 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_V;
+	constant OP_JMP_R_V 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_V;
 	constant OP_JMP_R_NZ 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NZ;
-	constant OP_JMP_R_ 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_Z;
+	constant OP_JMP_R_Z 			: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_Z;
 	constant OP_JMP_R_NC 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_NC;
 	constant OP_JMP_R_C 	 	: std_logic_vector(7 downto 0) := OP_JMP_FAMILY & JMP_R & JMP_C;
 
@@ -135,7 +135,7 @@ package opcodes is
 		
 	-- special instructions 
 	
-	constant OP_SPECIAL_GROUP := std_logic_vector(3 downto 0) := "0000";
+	constant OP_SPECIAL_GROUP : std_logic_vector(3 downto 0) := "0000";
 	
 	constant OP_HLT 			    : std_logic_vector(7 downto 0) := "00000000";
 	constant OP_NOP 				: std_logic_vector(7 downto 0) := "00000001";

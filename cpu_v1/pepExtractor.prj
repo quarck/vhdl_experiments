@@ -1,2 +1,3 @@
-work	"memory.vhd"
+work	"async_alu.vhd"
 work	"opcodes.vhd"
+work	"types.vhd"
