@@ -132,8 +132,18 @@ architecture behavior of TB_controlunit is
 
    type mem_type is array (0 to 255) of std_logic_vector(7 downto 0);
    signal mem: mem_type := (
-        OP_LDC & R0, x"fa",
-        OP_ST & R0, x"01",
+        OP_LDC & R0, x"01",
+		  OP_LDC & R1, x"02",
+		  OP_LDC & R2, x"03",
+        OP_ST & R0, x"00",
+		  OP_ST & R1, x"01",
+		  OP_ST & R2, x"02",
+		  OP_MOVE_RR, R3 & R0, 
+		  OP_MOVE_RR, R4 & R1, 
+		  OP_AALU_RR & ALU_ADD, R15 & R0,
+		  OP_AALU_RR & ALU_ADD, R15 & R0,
+		  OP_AALU_RR & ALU_ADD, R15 & R0,
+		  OP_AALU_RR & ALU_ADD, R15 & R0,
         -- OP_ADD, R0 & R0,
         -- OP_ADD, R0 & R0,
         OP_HLT, x"00",

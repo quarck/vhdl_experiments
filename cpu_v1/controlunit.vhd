@@ -101,6 +101,7 @@ begin
 		)
 		variable jump_state : cpu_state_type; 
 		variable jump_cond_match : boolean;
+        variable jump_addr : std_logic_vector(7 downto 0);
 	begin
 		if reset_i = '1' 
 		then
@@ -267,7 +268,8 @@ begin
  					mem_address_o <= mem_data_i;					
  					mem_data_o <= reg_port_c_data_read_i;
  					mem_write_o <= '1';
- 					cpu_state <= EXECUTE_ST_2;	-- go to FETCH_0 ?
+ 					-- cpu_state <= EXECUTE_ST_2;	-- go to FETCH_0 ?
+               cpu_state <= FETCH_0;
 
 				when EXECUTE_ST_2  => 
 					cpu_state <= FETCH_0;
@@ -284,13 +286,23 @@ begin
 				when EXECUTE_LD_3  =>  
 					reg_write_data_o <= mem_data_i;
 					reg_write_enable_o <= '1';
- 					cpu_state <= FETCH_0;
+ 					-- cpu_state <= FETCH_0;
+					mem_address_o <= program_counter;
+					mem_read_o <= '1';
+					program_counter <= program_counter + 1;
+					cpu_state <= FETCH_1;
+                    
 
 
 				when EXECUTE_LD_VAL_1  =>  
 					reg_write_data_o <= mem_data_i;
 					reg_write_enable_o <= '1';
- 					cpu_state <= FETCH_0;
+ 					-- cpu_state <= FETCH_0;
+					mem_address_o <= program_counter;
+					mem_read_o <= '1';
+					program_counter <= program_counter + 1;
+					cpu_state <= FETCH_1;
+                    
 
 -- 				when EXECUTE_ALU_RR  => 
 -- 					-- reg-reg
@@ -310,7 +322,12 @@ begin
 					reg_write_select_o	<= mem_data_i(7 downto 4); -- left reg of the op 
 					reg_write_data_o 	<= reg_port_b_data_read_i;
 					reg_write_enable_o 	<= '1';	
- 					cpu_state <= FETCH_0;
+ 					-- cpu_state <= FETCH_0;
+					mem_address_o <= program_counter;
+					mem_read_o <= '1';
+					program_counter <= program_counter + 1;
+					cpu_state <= FETCH_1;
+                    
 
 				when EXECUTE_MOV_RA_1  =>  
 					reg_write_select_o	<= mem_data_i(7 downto 4); -- left reg of the op 
@@ -328,23 +345,42 @@ begin
 					mem_address_o <= reg_port_a_data_read_i;					
  					mem_data_o <= reg_port_b_data_read_i;
  					mem_write_o <= '1';
- 					cpu_state <= EXECUTE_MOV_AR_2;	-- go to FETCH_0 ?
+ 					-- cpu_state <= EXECUTE_MOV_AR_2;	-- go to FETCH_0 ?
+               cpu_state <= FETCH_0;
 
 				when EXECUTE_MOV_AR_2  =>  
 					cpu_state <= FETCH_0;
 
 
 				when EXECUTE_JMP_ABS  => 
- 					program_counter <= mem_data_i;
- 					cpu_state <= FETCH_0;
+ 					-- program_counter <= mem_data_i;
+ 					-- cpu_state <= FETCH_0;
+                                        
+					program_counter <= mem_data_i + 1;
+					mem_address_o <= mem_data_i;
+					mem_read_o <= '1';
+					cpu_state <= FETCH_1;
+
 				
 				when EXECUTE_JMP_REL  => 
- 					program_counter <= program_counter + mem_data_i;
- 					cpu_state <= FETCH_0;
+ 					-- program_counter <= program_counter + mem_data_i;
+ 					-- cpu_state <= FETCH_0;
+
+					program_counter <= program_counter + mem_data_i + 1;
+					mem_address_o <= program_counter +  mem_data_i;
+					mem_read_o <= '1';
+					cpu_state <= FETCH_1;
+
 				
 				when EXECUTE_JMP_REG => 
-					program_counter <= reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
-					cpu_state <= FETCH_0;				
+					-- program_counter <= reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
+					-- cpu_state <= FETCH_0;				
+
+               jump_addr := program_counter + reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
+					program_counter <= jump_addr + 1;
+					mem_address_o <= jump_addr;
+					mem_read_o <= '1';
+					cpu_state <= FETCH_1;
 
 
 				when EXECUTE_PORT_IN_1  => 
@@ -375,11 +411,21 @@ begin
 					reg_write_data_o 	<= aalu_result_i;
 					reg_write_enable_o 	<= '1';	
  					flags <= aalu_flags_i;
- 					cpu_state <= FETCH_0;
+					aalu_opcode_o <= ALU_NOP;
+					
+					
+ 					-- cpu_state <= FETCH_0;
+					mem_address_o <= program_counter;
+					mem_read_o <= '1';
+					program_counter <= program_counter + 1;
+					cpu_state <= FETCH_1;
+					
+					
 
  				when EXECUTE_7SEG_1 => 
 					reg_write_select_o	<= mem_data_i(7 downto 4); -- left reg of the op 
 					reg_write_enable_o 	<= '1';	
+					aalu_opcode_o <= ALU_NOP;
 
  					case aalu_result_i(3 downto 0) is 
  						when "0000" => reg_write_data_o <= "11111100";
