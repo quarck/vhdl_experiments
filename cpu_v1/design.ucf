@@ -17,7 +17,7 @@ CONFIG VCCAUX = "3.3" ;
    #NET "CLK_12MHz"                   LOC = D9      | IOSTANDARD = LVCMOS33 | PERIOD = 12MHz ;
    
 
-   NET "RST_n"       IOSTANDARD = LVCMOS33 | PULLUP;
+   # NET "RST_n"       IOSTANDARD = LVCMOS33 | PULLUP;
    
 ###################################################################################################################################################
 #                                                 UART Interface                                                                                  #
@@ -153,19 +153,19 @@ CONFIG VCCAUX = "3.3" ;
 ###################################################################################################################################################
 #                                                    VGA                                                                                          #
 ################################################################################################################################################### 
-    #NET "HSync"                      LOC = B12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "VSync"                      LOC = A12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "HSync"                      LOC = B12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "VSync"                      LOC = A12     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
 
-    #NET "Red[2]"                     LOC = C9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "Red[1]"                     LOC = B9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "Red[0]"                     LOC = A9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Red_2"                     LOC = C9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Red_1"                     LOC = B9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Red_0"                     LOC = A9      | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
 
-    #NET "Green[2]"                   LOC = C11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "Green[1]"                   LOC = A10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "Green[0]"                   LOC = C10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Green_2"                   LOC = C11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Green_1"                   LOC = A10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Green_0"                   LOC = C10     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
 
-    #NET "Blue[2]"                    LOC = A11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
-    #NET "Blue[1]"                    LOC = B11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Blue_2"                    LOC = A11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
+    NET "Blue_1"                    LOC = B11     | IOSTANDARD = LVCMOS33 | DRIVE = 8 | SLEW = FAST ;
   
 ###################################################################################################################################################
 #                                                   HEADER P6                                                                                     #
