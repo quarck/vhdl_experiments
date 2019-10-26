@@ -12,14 +12,12 @@ entity regfile is
         rst_i                   : in std_logic;
         read_select_a_i         : in std_logic_vector(nreg-1 downto 0); 
         read_select_b_i         : in std_logic_vector(nreg-1 downto 0); 
-        read_select_c_i         : in std_logic_vector(nreg-1 downto 0); 
         
         write_select_i          : in std_logic_vector(nreg-1 downto 0);
         write_enable_i          : in std_logic;
         
         port_a_data_read_o      : out std_logic_vector (bits-1 downto 0); 
         port_b_data_read_o      : out std_logic_vector (bits-1 downto 0); 
-        port_c_data_read_o      : out std_logic_vector (bits-1 downto 0); 
 
         write_data_i            : in  std_logic_vector (bits-1 downto 0)
     );
@@ -31,7 +29,6 @@ architecture rtl of regfile is
 begin
     port_a_data_read_o <= regfile(to_integer(unsigned(read_select_a_i)));
     port_b_data_read_o <= regfile(to_integer(unsigned(read_select_b_i)));
-    port_c_data_read_o <= regfile(to_integer(unsigned(read_select_c_i)));
     
 write_process: 
 	process (clk_i, write_enable_i)

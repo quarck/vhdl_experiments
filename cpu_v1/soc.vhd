@@ -94,78 +94,78 @@ end soc;
 
 architecture structural of soc is 
 
-    -- component cpu is
-    --     port
-    --     (
-    --         clk_i                   : in std_logic;
-    --         reset_i                 : in std_logic;
-    --         error_o                 : out std_logic;
-    --         
-    --         -- memory interface 
-    --         mem_address_o           : out std_logic_vector(7 downto 0);
-    --         mem_data_i              : in std_logic_vector(7 downto 0);
-    --         mem_data_o              : out std_logic_vector(7 downto 0);
-    --         mem_read_o              : out std_logic;
-    --         mem_write_o             : out std_logic;
-    --         
-    --         -- pio 
-    --         pio_address_o           : out std_logic_vector(7 downto 0);
-    --         pio_data_o              : out std_logic_vector(7 downto 0); -- data entering IO port 
-    --         pio_data_i              : in std_logic_vector(7 downto 0);
-    --         pio_write_enable_o      : out std_logic;
-    --         pio_read_enable_o       : out std_logic;
-    --         pio_io_ready_i          : in std_logic;
-	-- 		
-	-- 		-- direct access to the video adapter 
-	-- 		vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-	-- 		vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-	-- 		vga_chr_o				: out std_logic_vector(7 downto 0); 
-	-- 		vga_clr_o				: out std_logic_vector(7 downto 0); 
-	-- 		vga_write_enable_o		: out std_logic
-	-- 		
-    --     );
-    -- end component;
+    component cpu is
+        port
+        (
+            clk_i                   : in std_logic;
+            reset_i                 : in std_logic;
+            error_o                 : out std_logic;
+            
+            -- memory interface 
+            mem_address_o           : out std_logic_vector(7 downto 0);
+            mem_data_i              : in std_logic_vector(7 downto 0);
+            mem_data_o              : out std_logic_vector(7 downto 0);
+            mem_read_o              : out std_logic;
+            mem_write_o             : out std_logic;
+            
+            -- pio 
+            pio_address_o           : out std_logic_vector(7 downto 0);
+            pio_data_o              : out std_logic_vector(7 downto 0); -- data entering IO port 
+            pio_data_i              : in std_logic_vector(7 downto 0);
+            pio_write_enable_o      : out std_logic;
+            pio_read_enable_o       : out std_logic;
+            pio_io_ready_i          : in std_logic;
+			
+			-- direct access to the video adapter 
+			vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
+			vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
+			vga_chr_o				: out std_logic_vector(7 downto 0); 
+			vga_clr_o				: out std_logic_vector(7 downto 0); 
+			vga_write_enable_o		: out std_logic
+			
+        );
+    end component;
     
-    -- component memory is
-    --     generic (
-    --         mem_size : integer := 256
-    --     );
-    --     port
-    --     (
-    --         clk_i           : in std_logic; 
-    --         rst_i           : in std_logic;
-    --         address_i       : in std_logic_vector(7 downto 0);
-    --         data_i          : in std_logic_vector(7 downto 0);
-    --         data_o          : out std_logic_vector(7 downto 0);
-    --         mem_read_i      : in std_logic;
-    --         mem_write_i     : in std_logic
-    --     );
-    -- end component;
+    component memory is
+        generic (
+            mem_size : integer := 256
+        );
+        port
+        (
+            clk_i           : in std_logic; 
+            rst_i           : in std_logic;
+            address_i       : in std_logic_vector(7 downto 0);
+            data_i          : in std_logic_vector(7 downto 0);
+            data_o          : out std_logic_vector(7 downto 0);
+            mem_read_i      : in std_logic;
+            mem_write_i     : in std_logic
+        );
+    end component;
 
---     component pio is 
---         port (
---             clk_i           : in std_logic;
---             rst_i           : in std_logic;
---             
---             port_address_i  : in std_logic_vector(7 downto 0);
---             data_i          : in std_logic_vector(7 downto 0); -- data entering IO port 
---             data_o          : out std_logic_vector(7 downto 0);
---             write_enable_i  : in std_logic;
---             read_enable_i   : in std_logic;
---             io_ready_o      : out std_logic;
---             
---             gpio_0_i        : in std_logic_vector (7 downto 0); -- dp switches 
---             gpio_1_i        : in std_logic_vector (7 downto 0); -- push btns
---             gpio_2_i        : in std_logic_vector (7 downto 0); -- pin header 6
---             gpio_3_i        : in std_logic_vector (7 downto 0); -- pin header 7
---                             
---             gpio_4_o        : out std_logic_vector (7 downto 0); -- individual leds
---             gpio_5_o        : out std_logic_vector (7 downto 0); -- 7-segment digits 
---             gpio_6_o        : out std_logic_vector (7 downto 0); -- 7-segment enable signals 
---             gpio_7_o        : out std_logic_vector (7 downto 0); -- pin header 8
---             gpio_8_o        : out std_logic_vector (7 downto 0) -- pin header 9
---         );
---     end component;
+    component pio is 
+        port (
+            clk_i           : in std_logic;
+            rst_i           : in std_logic;
+            
+            port_address_i  : in std_logic_vector(7 downto 0);
+            data_i          : in std_logic_vector(7 downto 0); -- data entering IO port 
+            data_o          : out std_logic_vector(7 downto 0);
+            write_enable_i  : in std_logic;
+            read_enable_i   : in std_logic;
+            io_ready_o      : out std_logic;
+            
+            gpio_0_i        : in std_logic_vector (7 downto 0); -- dp switches 
+            gpio_1_i        : in std_logic_vector (7 downto 0); -- push btns
+            gpio_2_i        : in std_logic_vector (7 downto 0); -- pin header 6
+            gpio_3_i        : in std_logic_vector (7 downto 0); -- pin header 7
+                            
+            gpio_4_o        : out std_logic_vector (7 downto 0); -- individual leds
+            gpio_5_o        : out std_logic_vector (7 downto 0); -- 7-segment digits 
+            gpio_6_o        : out std_logic_vector (7 downto 0); -- 7-segment enable signals 
+            gpio_7_o        : out std_logic_vector (7 downto 0); -- pin header 8
+            gpio_8_o        : out std_logic_vector (7 downto 0) -- pin header 9
+        );
+    end component;
 
 
     component vga is
@@ -228,100 +228,73 @@ architecture structural of soc is
 	
 begin 
 
---     c : cpu port map (
---         clk_i                   => clk,
---         reset_i                 => reset,
---         error_o                 => error,
---         
---         mem_address_o           => mem_address,
---         mem_data_i              => data_from_mem_to_cpu,
---         mem_data_o              => data_from_cpu_to_mem,
---         mem_read_o              => mem_read,
---         mem_write_o             => mem_write,
---             
---         pio_address_o           => pio_address,
---         pio_data_o              => data_from_cpu_to_pio,
---         pio_data_i              => data_from_pio_to_cpu,
---         pio_write_enable_o      => pio_write_enable,
---         pio_read_enable_o       => pio_read_enable,
---         pio_io_ready_i          => pio_io_ready,
--- 		
--- 		vga_pos_x_o				=> v_pos_x,
--- 		vga_pos_y_o				=> v_pos_y,
--- 		vga_chr_o				=> v_chr,
--- 		vga_clr_o				=> v_clr,
--- 		vga_write_enable_o		=> v_write_enable
--- 		
---     );
+    c : cpu port map (
+        clk_i                   => clk,
+        reset_i                 => reset,
+        error_o                 => error,
+        
+        mem_address_o           => mem_address,
+        mem_data_i              => data_from_mem_to_cpu,
+        mem_data_o              => data_from_cpu_to_mem,
+        mem_read_o              => mem_read,
+        mem_write_o             => mem_write,
+            
+        pio_address_o           => pio_address,
+        pio_data_o              => data_from_cpu_to_pio,
+        pio_data_i              => data_from_pio_to_cpu,
+        pio_write_enable_o      => pio_write_enable,
+        pio_read_enable_o       => pio_read_enable,
+        pio_io_ready_i          => pio_io_ready,
+ 		
+ 		vga_pos_x_o				=> v_pos_x,
+ 		vga_pos_y_o				=> v_pos_y,
+ 		vga_chr_o				=> v_chr,
+ 		vga_clr_o				=> v_clr,
+ 		vga_write_enable_o		=> v_write_enable
+    );
+    	 			
+    p: pio port map (
+        clk_i                   => clk,
+        rst_i                   => reset,
+            
+        port_address_i          => pio_address,
+        data_i                  => data_from_cpu_to_pio,
+        data_o                  => data_from_pio_to_cpu,
+        write_enable_i          => pio_write_enable,
+        read_enable_i           => pio_read_enable,
+        io_ready_o              => pio_io_ready,
+            
+        gpio_0_i                => in_port_0,
+        gpio_1_i                => in_port_1,
+        gpio_2_i                => in_port_2,
+        gpio_3_i                => in_port_3,
+ 
+        gpio_4_o                => out_port_4,
+        gpio_5_o                => out_port_5,
+        gpio_6_o                => out_port_6, 
+        gpio_7_o                => out_port_7,
+        gpio_8_o                => out_port_8
+    );
     
 	
-	  
-        mem_address            <= (others => '0');
-        data_from_cpu_to_mem   <= (others => '0');
-        mem_read               <= '0';
-        mem_write              <= '0';
-        pio_address            <= (others => '0');
-        data_from_cpu_to_pio   <= (others => '0');
-        pio_write_enable	  <= '0';
-        pio_read_enable       <= '0';
- 			
---     p: pio port map (
---         clk_i                   => clk,
---         rst_i                   => reset,
---             
---         port_address_i          => pio_address,
---         data_i                  => data_from_cpu_to_pio,
---         data_o                  => data_from_pio_to_cpu,
---         write_enable_i          => pio_write_enable,
---         read_enable_i           => pio_read_enable,
---         io_ready_o              => pio_io_ready,
---             
---         gpio_0_i                => in_port_0,
---         gpio_1_i                => in_port_1,
---         gpio_2_i                => in_port_2,
---         gpio_3_i                => in_port_3,
--- 
---         gpio_4_o                => out_port_4,
---         gpio_5_o                => out_port_5,
---         gpio_6_o                => out_port_6, 
---         gpio_7_o                => out_port_7,
---         gpio_8_o                => out_port_8
---     );
-    
-		out_port_4 <= (others => '0');
-        out_port_5 <= "01010101"; 
-        out_port_6 <= "01010101"; 
-        out_port_7 <= (others => '0');
-        out_port_8 <= (others => '0');
-		data_from_pio_to_cpu <= (others => '0');
-		pio_io_ready <= '1';
+    m: memory port map (
+        clk_i           => clk,
+        rst_i           => reset,        
+        address_i       => mem_address,
+        data_i          => data_from_cpu_to_mem,
+        data_o          => data_from_mem_to_cpu,
+        mem_read_i      => mem_read,
+        mem_write_i     => mem_write
+    );
 	
-    -- m: memory port map (
-    --     clk_i           => clk,
-    --     rst_i           => reset,        
-    --     address_i       => mem_address,
-    --     data_i          => data_from_cpu_to_mem,
-    --     data_o          => data_from_mem_to_cpu,
-    --     mem_read_i      => mem_read,
-    --     mem_write_i     => mem_write
-    -- );
-	
-	data_from_mem_to_cpu <= (others => '0');
-
     v: vga port map (
         clk_i       => clk,
 		
---		pos_x_i			=> v_pos_x,
-		--pos_y_i			=> v_pos_y,
-		--chr_i			=> v_chr,
-		--clr_i			=> v_clr,
-		--write_enable_i	=> v_write_enable,
-		
-	pos_x_i			=> (others => '0'),
-		pos_y_i			=> (others => '0'),
-		chr_i			=> (others => '0'),
-		clr_i			=> (others => '0'),
-		write_enable_i	=> '0',		
+		pos_x_i			=> v_pos_x,
+		pos_y_i			=> v_pos_y,
+		chr_i			=> v_chr,
+		clr_i			=> v_clr,
+		write_enable_i	=> v_write_enable,
 		
         hsync_o     => HSync,
         vsync_o     => VSync,

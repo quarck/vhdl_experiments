@@ -17,6 +17,7 @@ package types is
         
         FETCH_0, 
         FETCH_1,
+		FETCH_2,
 
         DECODE,
         

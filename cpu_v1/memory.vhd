@@ -33,6 +33,8 @@ architecture rtl of memory is
 		 OP_LDC & R1, x"44",
 		 OP_SETC, R1 & R1,
 		 OP_AALU_RV & ALU_ADD, R0 & x"1",
+		 
+		 OP_WAIT, x"FF",
 
 		 OP_JMP_A_UNCOND, x"04",
 		 

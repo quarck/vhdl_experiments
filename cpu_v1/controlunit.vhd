@@ -1,6 +1,7 @@
 library ieee ;
-use ieee.std_logic_1164.all ;
-use ieee.std_logic_unsigned.all ;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all;
+use ieee.numeric_std.all;
 
 use work.opcodes.all;
 use work.types.all;
@@ -18,23 +19,12 @@ entity controlunit is
         mem_data_o              : out std_logic_vector(7 downto 0);
         mem_read_o              : out std_logic;
         mem_write_o             : out std_logic;
-        
-        -- regfile interface
-        reg_read_select_a_o     : out std_logic_vector(3 downto 0); -- hard-wired to mem_data_i(7 downto 4)
-        reg_read_select_b_o     : out std_logic_vector(3 downto 0); -- hard-wired to mem_data_i(3 downto 0)
-        reg_read_select_c_o     : out std_logic_vector(3 downto 0); -- latched 
-        reg_write_select_o      : out std_logic_vector(3 downto 0); -- latched 
-        reg_write_enable_o      : out std_logic;        
-        reg_port_a_data_read_i  : in std_logic_vector (7 downto 0); 
-        reg_port_b_data_read_i  : in std_logic_vector (7 downto 0); 
-        reg_port_c_data_read_i  : in std_logic_vector (7 downto 0); 
-        reg_write_data_o        : out  std_logic_vector (7 downto 0);
 
         -- aalu control 
         aalu_opcode_o           : out std_logic_vector(3 downto 0);
-        aalu_carry_in_o         : out std_logic;        
-        aalu_right_val_o        : out std_logic_vector(7 downto 0);
-        aalu_right_select_o     : out ALU_arg_select;
+        aalu_left_o 	        : out std_logic_vector(7 downto 0);
+        aalu_right_o	        : out std_logic_vector(7 downto 0);
+        aalu_carry_in_o	 	    : out std_logic;
         aalu_result_i           : in std_logic_vector(7 downto 0);
         aalu_flags_i            : in ALU_flags;
 
@@ -51,19 +41,18 @@ entity controlunit is
 		vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
 		vga_chr_o				: out std_logic_vector(7 downto 0); 
 		vga_clr_o				: out std_logic_vector(7 downto 0); 
-		vga_write_enable_o		: out std_logic;
-        
-        -- debug stuff 
-        dbg_pc_o                : out std_logic_vector(7 downto 0);
-        dbg_ir_o                : out std_logic_vector(7 downto 0); 
-        dbg_state_o             : out cpu_state_type;
-        dbg_clk_cnt_o           : out std_logic_vector(31 downto 0);
-        dbg_inst_cnt_o          : out std_logic_vector(31 downto 0)
+		vga_write_enable_o		: out std_logic
         
     );
 end controlunit;
 
 architecture behaviour of controlunit is
+
+	type regfile_type is array (0 to 15) of std_logic_vector(7 downto 0);
+    signal regfile 					: regfile_type := (others => (others => '0'));
+	signal left_arg_reg_value		: std_logic_vector(7 downto 0);
+	signal right_arg_reg_value		: std_logic_vector(7 downto 0);
+	signal right_arg_expl_value 	: std_logic_vector(7 downto 0);
 
     signal cpu_state                : cpu_state_type;
     signal program_counter          : std_logic_vector(7 downto 0);
@@ -77,22 +66,6 @@ architecture behaviour of controlunit is
 	signal wait_counter				: std_logic_vector(18 downto 0) := (others => '0');
 
 begin
-
-    dbg_pc_o <= program_counter;
-    dbg_ir_o <= instruction_code;
-    dbg_state_o <= cpu_state;
-
-    dbg_clk_cnt_o   <= clk_counter;
-    dbg_inst_cnt_o  <= inst_counter;
-
-    -- hard-wire register select signals to the current memory data input, 
-    -- thus we can have registers auto-selected fo commands using 2nd argument 
-    -- as REG-REG or REG-VAL 
-    reg_read_select_a_o <= mem_data_i(7 downto 4); -- hard-wired 
-    reg_read_select_b_o <= mem_data_i(3 downto 0); -- hard-wired 
-    
-    -- same as registers - hard-wire for REG-VAL ALU operations
-    aalu_right_val_o <= "0000" & mem_data_i(3 downto 0); 
 
     process (clk_i, reset_i)
         variable jump_state : cpu_state_type; 
@@ -110,12 +83,8 @@ begin
 
 			aalu_opcode_o   <= ALU_NOP;
 			aalu_carry_in_o <= '0';
-			aalu_right_select_o     <= reg_port;
-
-			reg_write_enable_o <= '0';
-			reg_read_select_c_o <= (others => '0');
-			reg_write_select_o  <= (others => '0');
-			reg_write_data_o    <= (others => '0');
+			aalu_left_o  <= (others => '0');
+			aalu_right_o <= (others => '0');
 			
 			pio_address_o <= "00000000"; 
 			pio_data_o <= "00000000"; 
@@ -125,7 +94,7 @@ begin
 			flags <= (others => '0');
 			error_o <= '0';
 			
-			clk_counter <= (others => '0');
+			clk_counter  <= (others => '0');
 			inst_counter <= (others => '0');
 			
 			vga_pos_x_o			<= (others => '0'); 
@@ -141,7 +110,6 @@ begin
 
 			mem_write_o <= '0'; -- set it off by default unless we want it 
 			mem_read_o <= '0';
-			reg_write_enable_o <= '0'; 
 			vga_write_enable_o <= '0';
 			
 			case cpu_state is
@@ -162,37 +130,43 @@ begin
 					mem_read_o <= '1';
 					program_counter <= program_counter + 1;
 
-					cpu_state <= DECODE;
+					cpu_state <= FETCH_2;
 					
 					inst_counter <= inst_counter + 1;
+
+				when FETCH_2 =>				
+					left_arg_reg_value	<= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
+					right_arg_reg_value	<=  regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
+					right_arg_expl_value <= "0000" & mem_data_i(3 downto 0); 
+				
+					instruction_code <= mem_data_i;
+					cpu_state <= DECODE;
+
 					
 				when DECODE =>
-					-- instruction code would have just arrive by now in the data IN
-					instruction_code <= mem_data_i;
-				
-					case mem_data_i(7 downto 4) is 
+					case instruction_code(7 downto 4) is 
 						when OP_ST => 
-							reg_read_select_c_o <= mem_data_i(3 downto 0); -- use latched 
+							left_arg_reg_value	<= regfile(to_integer(unsigned(instruction_code(3 downto 0))));
 							cpu_state <= EXECUTE_ST_1;
 
 						when OP_LD => 
-							reg_write_select_o <= mem_data_i(3 downto 0);
 							cpu_state <= EXECUTE_LD_1;
 
 						when OP_LDC =>
-							reg_write_select_o <= mem_data_i(3 downto 0);
 							cpu_state <= EXECUTE_LD_VAL_1;
 						
 						when OP_AALU_RR => 
-							aalu_opcode_o <= mem_data_i(3 downto 0);
+							aalu_opcode_o <= instruction_code(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
-							aalu_right_select_o <= reg_port;
+							aalu_left_o <= left_arg_reg_value;
+							aalu_right_o <= right_arg_reg_value;
 							cpu_state <= STORE;
 
 						when OP_AALU_RV => 
-							aalu_opcode_o <= mem_data_i(3 downto 0);
+							aalu_opcode_o <= instruction_code(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
-							aalu_right_select_o <= value_port;
+							aalu_left_o <= left_arg_reg_value;
+							aalu_right_o <= right_arg_expl_value;
 							cpu_state <= STORE;
 
 						when OP_SALU_RR | OP_SALU_RV =>
@@ -200,7 +174,7 @@ begin
 							cpu_state <= STOP; -- SALU is not implemented yet
 						
 						when OP_MOVE_GROUP => 
-							case mem_data_i(3 downto 2) is 
+							case instruction_code(3 downto 2) is 
 								when MOVE_TYPE_RR   =>  cpu_state <= EXECUTE_MOV_RR;
 								when MOVE_TYPE_RA   =>  cpu_state <= EXECUTE_MOV_RA_1;
 								when MOVE_TYPE_AR   =>  cpu_state <= EXECUTE_MOV_AR_1;
@@ -209,7 +183,7 @@ begin
 						
 						when OP_JMP_ABS_GROUP | OP_JMP_REL_GROUP | OP_JMP_R_GROUP => 
 
-							case mem_data_i(5 downto 4) is 
+							case instruction_code(5 downto 4) is 
 								when JMP_ABS    =>  jump_state := EXECUTE_JMP_ABS;
 								when JMP_REL    =>  jump_state := EXECUTE_JMP_REL;
 								when JMP_R      =>  jump_state := EXECUTE_JMP_REG;
@@ -218,12 +192,12 @@ begin
 							
 							jump_cond_match := false;
 							
-							case mem_data_i(3 downto 0) is 
+							case instruction_code(3 downto 0) is 
 								when JMP_UNCOND         => jump_cond_match := true;
-								when JMP_POS | JMP_NEG  => jump_cond_match := flags.negative = mem_data_i(0);
-								when JMP_NV  | JMP_V    => jump_cond_match := flags.overflow = mem_data_i(0);
-								when JMP_NZ  | JMP_Z    => jump_cond_match := flags.zero = mem_data_i(0);
-								when JMP_NC  | JMP_C    => jump_cond_match := flags.carry_out = mem_data_i(0);
+								when JMP_POS | JMP_NEG  => jump_cond_match := flags.negative = instruction_code(0);
+								when JMP_NV  | JMP_V    => jump_cond_match := flags.overflow = instruction_code(0);
+								when JMP_NZ  | JMP_Z    => jump_cond_match := flags.zero = instruction_code(0);
+								when JMP_NC  | JMP_C    => jump_cond_match := flags.carry_out = instruction_code(0);
 								when others             => jump_cond_match := false;
 							end case;
 
@@ -235,15 +209,13 @@ begin
 							end if;
 
 						when OP_IN_GROUP => 
-							reg_write_select_o <= mem_data_i(3 downto 0);
 							cpu_state <= EXECUTE_PORT_IN_1;
 
 						when OP_OUT_GROUP => 
-							reg_read_select_c_o <= mem_data_i(3 downto 0); -- latched read port 
 							cpu_state <= EXECUTE_PORT_OUT_1;
 						
 						when OP_SPECIAL_GROUP => 
-							case mem_data_i is 
+							case instruction_code is 
 								when OP_NOP =>
 									cpu_state <= FETCH_0;
 
@@ -252,8 +224,9 @@ begin
 
 								when OP_SEVENSEGTRANSLATE =>
 									aalu_opcode_o <= ALU_SHR;
-									aalu_carry_in_o <= '0';
-									aalu_right_select_o <= value_port;                              
+									aalu_carry_in_o <= '0';									
+									aalu_left_o <= left_arg_reg_value;
+									aalu_right_o <= right_arg_expl_value;
 									cpu_state <= EXECUTE_7SEG_1;
 									
 									
@@ -283,7 +256,7 @@ begin
 				
 				when EXECUTE_ST_1  =>  
 					mem_address_o <= mem_data_i;                    
-					mem_data_o <= reg_port_c_data_read_i;
+					mem_data_o <= left_arg_reg_value;
 					mem_write_o <= '1';
 					-- cpu_state <= EXECUTE_ST_2;   -- go to FETCH_0 ?
 					cpu_state <= FETCH_0;
@@ -301,55 +274,36 @@ begin
 					cpu_state <= EXECUTE_LD_3;
 
 				when EXECUTE_LD_3  =>  
-					reg_write_data_o <= mem_data_i;
-					reg_write_enable_o <= '1';
+					regfile(to_integer(unsigned(instruction_code(3 downto 0)))) <= mem_data_i;					
 					cpu_state <= FETCH_0;
-					-- mem_address_o <= program_counter;
-					-- mem_read_o <= '1';
-					-- program_counter <= program_counter + 1;
-					-- cpu_state <= FETCH_1;
-
 
 
 				when EXECUTE_LD_VAL_1  =>  
-					reg_write_data_o <= mem_data_i;
-					reg_write_enable_o <= '1';
+					regfile(to_integer(unsigned(instruction_code(3 downto 0)))) <= mem_data_i;
 					cpu_state <= FETCH_0;
-					-- mem_address_o <= program_counter;
-					-- mem_read_o <= '1';
-					-- program_counter <= program_counter + 1;
-					-- cpu_state <= FETCH_1;
 
 					
 				when EXECUTE_MOV_RR  =>  
-					reg_write_select_o  <= mem_data_i(7 downto 4); -- left reg of the op 
-					reg_write_data_o    <= reg_port_b_data_read_i;
-					reg_write_enable_o  <= '1'; 
+					regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= right_arg_reg_value;
 					cpu_state <= FETCH_0;
-					-- mem_address_o <= program_counter;
-					-- mem_read_o <= '1';
-					-- program_counter <= program_counter + 1;
-					-- cpu_state <= FETCH_1;
 					
 
 				when EXECUTE_MOV_RA_1  =>  
-					reg_write_select_o  <= mem_data_i(7 downto 4); -- left reg of the op 
-					mem_address_o <= reg_port_b_data_read_i;
+					left_arg_reg_value <= mem_data_i; 
+					mem_address_o <= right_arg_reg_value;
 					mem_read_o  <= '1';
 					cpu_state <= EXECUTE_MOV_RA_2;
 				when EXECUTE_MOV_RA_2  =>  
 					cpu_state <= EXECUTE_MOV_RA_3;
 				when EXECUTE_MOV_RA_3  =>  
-					reg_write_data_o <= mem_data_i;
-					reg_write_enable_o <= '1';
+					regfile(to_integer(unsigned(left_arg_reg_value(7 downto 4)))) <= mem_data_i;
 					cpu_state <= FETCH_0;
 
 				when EXECUTE_MOV_AR_1  =>  
-					mem_address_o <= reg_port_a_data_read_i;                    
-					mem_data_o <= reg_port_b_data_read_i;
+					mem_address_o <= left_arg_reg_value;                    
+					mem_data_o <= right_arg_reg_value;
 					mem_write_o <= '1';
 					cpu_state <= EXECUTE_MOV_AR_2;   -- go to FETCH_0 ?
-					-- cpu_state <= FETCH_0;
 
 				when EXECUTE_MOV_AR_2  =>  
 					cpu_state <= FETCH_0;
@@ -359,32 +313,14 @@ begin
 					program_counter <= mem_data_i;
 					cpu_state <= FETCH_0;
 										
-					-- program_counter <= mem_data_i + 1;
-					-- mem_address_o <= mem_data_i;
-					-- mem_read_o <= '1';
-					-- cpu_state <= FETCH_1;
 
-				
 				when EXECUTE_JMP_REL  => 
 					program_counter <= program_counter + mem_data_i;
 					cpu_state <= FETCH_0;
-
-					-- program_counter <= program_counter + mem_data_i + 1;
-					-- mem_address_o <= program_counter +  mem_data_i;
-					-- mem_read_o <= '1';
-					-- cpu_state <= FETCH_1;
-
 				
 				when EXECUTE_JMP_REG => 
-					program_counter <= reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
-					cpu_state <= FETCH_0;                
-
-					-- jump_addr := program_counter + reg_port_a_data_read_i + ("0000" + mem_data_i(3 downto 0));
-					-- program_counter <= jump_addr + 1;
-					-- mem_address_o <= jump_addr;
-					-- mem_read_o <= '1';
-					-- cpu_state <= FETCH_1;
-
+					program_counter <= left_arg_reg_value + right_arg_expl_value;
+					cpu_state <= FETCH_0; 
 
 				when EXECUTE_PORT_IN_1  => 
 					pio_address_o <= mem_data_i;
@@ -392,8 +328,7 @@ begin
 					cpu_state <= EXECUTE_PORT_IN_2;
 				when EXECUTE_PORT_IN_2  => 
 					if pio_io_ready_i = '1' then 
-						reg_write_data_o    <= pio_data_i;
-						reg_write_enable_o  <= '1'; 
+						regfile(to_integer(unsigned(instruction_code(3 downto 0)))) <= pio_data_i;
 						pio_read_enable_o <= '0';
 						cpu_state <= FETCH_0;
 					end if;
@@ -401,7 +336,7 @@ begin
 				when EXECUTE_PORT_OUT_1  => 
 					pio_address_o <= mem_data_i;
 					pio_write_enable_o <= '1';
-					pio_data_o <= reg_port_c_data_read_i;
+					pio_data_o <= regfile(to_integer(unsigned(instruction_code(3 downto 0))));
 					cpu_state <= EXECUTE_PORT_OUT_2;
 				when EXECUTE_PORT_OUT_2 => 
 					if pio_io_ready_i = '1' then 
@@ -410,59 +345,49 @@ begin
 					end if;
 
 				when STORE  =>  
-					reg_write_select_o  <= mem_data_i(7 downto 4); -- left reg of the op 
-					reg_write_data_o    <= aalu_result_i;
-					reg_write_enable_o  <= '1'; 
+					regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= aalu_result_i;
 					flags <= aalu_flags_i;
 					aalu_opcode_o <= ALU_NOP;
 										
 					cpu_state <= FETCH_0;
-					-- mem_address_o <= program_counter;
-					-- mem_read_o <= '1';
-					-- program_counter <= program_counter + 1;
-					-- cpu_state <= FETCH_1;
-					
-					
 
 				when EXECUTE_7SEG_1 => 
-					reg_write_select_o  <= mem_data_i(7 downto 4); -- left reg of the op 
-					reg_write_enable_o  <= '1'; 
 					aalu_opcode_o <= ALU_NOP;
 
 					case aalu_result_i(3 downto 0) is 
-						when "0000" => reg_write_data_o <= "11111100";
-						when "0001" => reg_write_data_o <= "01100000";
-						when "0010" => reg_write_data_o <= "11011010";
-						when "0011" => reg_write_data_o <= "11110010"; 
-						when "0100" => reg_write_data_o <= "01100110";
-						when "0101" => reg_write_data_o <= "10110110";
-						when "0110" => reg_write_data_o <= "10111110";
-						when "0111" => reg_write_data_o <= "11100000";
-						when "1000" => reg_write_data_o <= "11111110";
-						when "1001" => reg_write_data_o <= "11110110";
-						when "1010" => reg_write_data_o <= "11101110";
-						when "1011" => reg_write_data_o <= "00111110";
-						when "1100" => reg_write_data_o <= "10011100";
-						when "1101" => reg_write_data_o <= "01111010";
-						when "1110" => reg_write_data_o <= "10011110";
-						when "1111" => reg_write_data_o <= "10001110";                              
-						when others => reg_write_data_o <= "00000010";
+						when "0000" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11111100";
+						when "0001" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "01100000";
+						when "0010" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11011010";
+						when "0011" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11110010"; 
+						when "0100" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "01100110";
+						when "0101" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "10110110";
+						when "0110" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "10111110";
+						when "0111" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11100000";
+						when "1000" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11111110";
+						when "1001" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11110110";
+						when "1010" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "11101110";
+						when "1011" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "00111110";
+						when "1100" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "10011100";
+						when "1101" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "01111010";
+						when "1110" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "10011110";
+						when "1111" => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "10001110";                              
+						when others => regfile(to_integer(unsigned(mem_data_i(7 downto 4)))) <= "00000010";
 					end case;
 					cpu_state <= FETCH_0; 
 
 
 				when EXECUTE_SET_XY => 
-					vga_pos_x_o <= reg_port_a_data_read_i(6 downto 0);
-					vga_pos_y_o <= reg_port_b_data_read_i(4 downto 0);
+					vga_pos_x_o <= left_arg_reg_value(6 downto 0);
+					vga_pos_y_o <= right_arg_reg_value(4 downto 0);
 					cpu_state <= FETCH_0; 
 
 				when EXECUTE_SET_CHAR => 
-					vga_chr_o <= reg_port_a_data_read_i;
+					vga_chr_o <= left_arg_reg_value;
 					vga_write_enable_o <= '1';					
 					cpu_state <= FETCH_0; 
 				
 				when EXECUTE_SET_COLOR => 
-					vga_clr_o <= reg_port_a_data_read_i;
+					vga_clr_o <= left_arg_reg_value;
 					cpu_state <= FETCH_0; 
 
 				when EXECUTE_WAIT_1 => 
