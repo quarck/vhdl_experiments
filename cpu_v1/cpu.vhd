@@ -72,7 +72,16 @@ architecture structural of cpu is
 			vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
 			vga_chr_o				: out std_logic_vector(7 downto 0); 
 			vga_clr_o				: out std_logic_vector(7 downto 0); 
-			vga_write_enable_o		: out std_logic
+			vga_write_enable_o		: out std_logic;
+			
+
+			dbg_lr_o				: out std_logic_vector(7 downto 0);
+			dbg_rr_o				: out std_logic_vector(7 downto 0);
+			dbg_rv_o 				: out std_logic_vector(7 downto 0);	
+			dbg_state_o             : out cpu_state_type;
+			dbg_pc_o          		: out std_logic_vector(7 downto 0);	
+			dbg_f_o                 : out ALU_flags := (others => '0');
+			dbg_ir_o       			: out std_logic_vector(7 downto 0)
 			
 		);
     end component;  
@@ -132,7 +141,15 @@ begin
 		vga_pos_y_o				=> vga_pos_y_o,
 		vga_chr_o				=> vga_chr_o,
 		vga_clr_o				=> vga_clr_o,
-		vga_write_enable_o		=> vga_write_enable_o
+		vga_write_enable_o		=> vga_write_enable_o, 
+		
+		dbg_lr_o          		=> open,
+		dbg_rr_o				=> open,
+		dbg_rv_o 				=> open,
+		dbg_state_o				=> open,
+		dbg_pc_o   				=> open,
+		dbg_f_o    				=> open,
+		dbg_ir_o   				=> open
     );
     
     a: async_ALU port map (

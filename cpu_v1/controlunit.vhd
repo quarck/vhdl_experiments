@@ -41,8 +41,15 @@ entity controlunit is
 		vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
 		vga_chr_o				: out std_logic_vector(7 downto 0); 
 		vga_clr_o				: out std_logic_vector(7 downto 0); 
-		vga_write_enable_o		: out std_logic
-        
+		vga_write_enable_o		: out std_logic;
+
+		dbg_lr_o				: out std_logic_vector(7 downto 0);
+		dbg_rr_o				: out std_logic_vector(7 downto 0);
+		dbg_rv_o 				: out std_logic_vector(7 downto 0);	
+		dbg_state_o             : out cpu_state_type;
+		dbg_pc_o          		: out std_logic_vector(7 downto 0);	
+		dbg_f_o                 : out ALU_flags := (others => '0');
+		dbg_ir_o       			: out std_logic_vector(7 downto 0)        
     );
 end controlunit;
 
@@ -61,12 +68,19 @@ architecture behaviour of controlunit is
     signal flags                    : ALU_flags := (others => '0');
     signal instruction_code         : std_logic_vector(7 downto 0);
     
-    signal clk_counter              : std_logic_vector(31 downto 0) := (others => '0');
-    signal inst_counter             : std_logic_vector(31 downto 0) := (others => '0');
+    -- signal clk_counter              : std_logic_vector(31 downto 0) := (others => '0');
 
 	signal wait_counter				: std_logic_vector(18 downto 0) := (others => '0');
 
 begin
+
+	dbg_lr_o    <= left_arg_reg_value;
+	dbg_rr_o    <= right_arg_reg_value;
+	dbg_rv_o    <= right_arg_expl_value;
+	dbg_state_o <= cpu_state;
+	dbg_pc_o    <= program_counter;	
+	dbg_f_o     <= flags;
+	dbg_ir_o    <= instruction_code;
 
     process (clk_i, reset_i)
         variable jump_state : cpu_state_type; 
@@ -95,8 +109,7 @@ begin
 			flags <= (others => '0');
 			error_o <= '0';
 			
-			clk_counter  <= (others => '0');
-			inst_counter <= (others => '0');
+			-- clk_counter  <= (others => '0');
 			
 			vga_pos_x_o			<= (others => '0'); 
 			vga_pos_y_o			<= (others => '0');
@@ -107,7 +120,7 @@ begin
 			
 		elsif rising_edge(clk_i) 
 		then
-			clk_counter <= clk_counter + 1;
+			-- clk_counter <= clk_counter + 1;
 
 			mem_write_o <= '0'; -- set it off by default unless we want it 
 			mem_read_o <= '0';
@@ -133,18 +146,15 @@ begin
 
 					cpu_state <= FETCH_2;
 					
-					inst_counter <= inst_counter + 1;
-
 				when FETCH_2 =>				
-					left_arg_reg_value	<= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
-					right_arg_reg_value	<=  regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
-					right_arg_expl_value <= "0000" & mem_data_i(3 downto 0); 
-				
 					instruction_code <= mem_data_i;
 					cpu_state <= DECODE;
 
-					
 				when DECODE =>
+					left_arg_reg_value	<= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
+					right_arg_reg_value	<=  regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
+					right_arg_expl_value <= "0000" & mem_data_i(3 downto 0); 
+
 					case instruction_code(7 downto 4) is 
 						when OP_ST => 
 							left_arg_reg_value	<= regfile(to_integer(unsigned(instruction_code(3 downto 0))));

@@ -25,23 +25,60 @@ architecture rtl of memory is
     type mem_type is array (0 to mem_size-1) of std_logic_vector(7 downto 0);
 
     signal mem: mem_type:= (
---0: start:
-		 OP_LDC & R0, x"0d",
-		 OP_LDC & R1, x"07",
-		 OP_LDC & R2, x"44",
-		 
-		 OP_SETXY, R0 & R1,
-		 OP_SETC, R2 & R2,
-		 
-		 OP_AALU_RV & ALU_ADD, R0 & x"5",
-		 OP_AALU_RV & ALU_ADD, R1 & x"3",
-		 OP_AALU_RV & ALU_ADD, R2 & x"1",
-		 
-		 -- OP_WAIT, x"FF",
+		--0: start:
+		OP_LDC & R0, x"01", -- A0 
+		OP_LDC & R1, x"00", -- A1
+		
+		OP_LDC & R2, x"01", -- B0
+		OP_LDC & R3, x"00", -- B1
+		
+		OP_LDC & R4, x"00", -- C0
+		OP_LDC & R5, x"00", -- C1
+			
+--0x0c: loop: 
+		OP_MOVE_RR, R4 & R0,  -- C0 = A0
+		OP_AALU_RR & ALU_ADD, R4 & R2, -- C0 = A0 + B0
+		OP_MOVE_RR, R5 & R1,  -- C1 = A1
+		OP_AALU_RR & ALU_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
 
-		 OP_JMP_A_UNCOND, x"06",
-		 
-		 others => x"00"
+		OP_MOVE_RR, R0 & R2, 
+		OP_MOVE_RR, R1 & R3,     
+		OP_MOVE_RR, R2 & R4, 
+		OP_MOVE_RR, R3 & R5, 
+
+		OP_SETXY, R0 & R1,
+		OP_SETC, R2 & R3,
+			 
+
+		-- now - display the thing 	
+		OP_LDC & R15, x"00",
+		OP_OUT_GROUP & R15, x"06",
+		OP_MOVE_RR, R15 & R4,
+		OP_SEVENSEGTRANSLATE, R15 & x"0",
+		OP_OUT_GROUP & R15, x"05",
+
+		OP_LDC & R15, x"01",
+		OP_OUT_GROUP & R15, x"06",
+		OP_MOVE_RR, R15 & R4,
+		OP_SEVENSEGTRANSLATE, R15 & x"4",
+		OP_OUT_GROUP & R15, x"05",
+
+		OP_LDC & R15, x"02",
+		OP_OUT_GROUP & R15, x"06",
+		OP_MOVE_RR, R15 & R5,
+		OP_SEVENSEGTRANSLATE, R15 & x"0",
+		OP_OUT_GROUP & R15, x"05",
+			
+			
+		OP_WAIT, x"FF",
+
+		OP_LDC & R14, x"F0",
+		OP_AALU_RR & ALU_AND, R14 & R5,
+
+		-- OP_JMP_A_NZ,         x"00", 		-- go start if Acc != 0 (12-bit ovflow)						
+		OP_JMP_A_UNCOND,    x"0c", 		-- go loop in all other cases     
+
+		others => x"00"
 	);
 	
 	attribute ram_style: string;
