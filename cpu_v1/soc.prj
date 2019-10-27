@@ -1,6 +1,7 @@
 vhdl work "types.vhd"
 vhdl work "opcodes.vhd"
 vhdl work "vga_chrg_rom.vhd"
+vhdl work "sevenseg.vhd"
 vhdl work "controlunit.vhd"
 vhdl work "async_alu.vhd"
 vhdl work "vga.vhd"

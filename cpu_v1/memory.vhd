@@ -28,52 +28,67 @@ architecture rtl of memory is
 		--0: start:
 		OP_LDC & R0, x"01", -- A0 
 		OP_LDC & R1, x"00", -- A1
+		OP_LDC & R2, x"00", -- A3
+		OP_LDC & R3, x"00", -- A4
 		
-		OP_LDC & R2, x"01", -- B0
-		OP_LDC & R3, x"00", -- B1
+		OP_LDC & R4, x"01", -- B0
+		OP_LDC & R5, x"00", -- B1
+		OP_LDC & R6, x"00", -- B2
+		OP_LDC & R7, x"00", -- B3
 		
-		OP_LDC & R4, x"00", -- C0
-		OP_LDC & R5, x"00", -- C1
+		OP_LDC & R8, x"00", -- C0
+		OP_LDC & R9, x"00", -- C1
+		OP_LDC & R10, x"00", -- C2
+		OP_LDC & R11, x"00", -- C3
 			
 --0x0c: loop: 
-		OP_MOVE_RR, R4 & R0,  -- C0 = A0
-		OP_AALU_RR & ALU_ADD, R4 & R2, -- C0 = A0 + B0
-		OP_MOVE_RR, R5 & R1,  -- C1 = A1
-		OP_AALU_RR & ALU_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
+		OP_MOVE_RR, R8 & R0,  -- C0 = A0
+		OP_AALU_RR & ALU_ADD, R8 & R4, -- C0 = A0 + B0
+		OP_MOVE_RR, R9 & R1,  -- C1 = A1
+		OP_AALU_RR & ALU_ADDC, R9 & R5, -- C1 = A1 + B1 + carry
+		OP_MOVE_RR, R10 & R2,  -- C2 = A2
+		OP_AALU_RR & ALU_ADDC, R10 & R6, -- C2 = A2 + B2 + carry
+		OP_MOVE_RR, R11 & R3,  -- C3 = A3
+		OP_AALU_RR & ALU_ADDC, R11 & R7, -- C3 = A3 + B3 + carry
 
-		OP_MOVE_RR, R0 & R2, 
-		OP_MOVE_RR, R1 & R3,     
-		OP_MOVE_RR, R2 & R4, 
-		OP_MOVE_RR, R3 & R5, 
+		OP_MOVE_RR, R0 & R4, 
+		OP_MOVE_RR, R1 & R5,     
+		OP_MOVE_RR, R2 & R6,     
+		OP_MOVE_RR, R3 & R7,     
+		
+		OP_MOVE_RR, R4 & R8, 
+		OP_MOVE_RR, R5 & R9, 
+		OP_MOVE_RR, R6 & R10, 
+		OP_MOVE_RR, R7 & R11, 
 
-		OP_SETXY, R0 & R1,
-		OP_SETC, R2 & R3,
+		OP_SETXY, R10 & R11,
+		OP_SETC, R6 & R7,
 			 
 
 		-- now - display the thing 	
 		OP_LDC & R15, x"00",
 		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
+		OP_MOVE_RR, R15 &R8,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
 
 		OP_LDC & R15, x"01",
 		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
+		OP_MOVE_RR, R15 & R8,
 		OP_SEVENSEGTRANSLATE, R15 & x"4",
 		OP_OUT_GROUP & R15, x"05",
 
 		OP_LDC & R15, x"02",
 		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R5,
+		OP_MOVE_RR, R15 & R9,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
 			
 			
-		OP_WAIT, x"FF",
+		OP_WAIT, x"01",
 
-		OP_LDC & R14, x"F0",
-		OP_AALU_RR & ALU_AND, R14 & R5,
+		-- OP_LDC & R14, x"F0",
+		-- OP_AALU_RR & ALU_AND, R14 & R5,
 
 		-- OP_JMP_A_NZ,         x"00", 		-- go start if Acc != 0 (12-bit ovflow)						
 		OP_JMP_A_UNCOND,    x"0c", 		-- go loop in all other cases     

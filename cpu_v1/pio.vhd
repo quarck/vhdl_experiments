@@ -60,10 +60,9 @@ begin
 		data_gpio_o     => gpio_5_o
 	);
  
-     process (clk_i, data_i, write_enable_i, read_enable_i)
+     process (clk_i)
      begin
          if rising_edge(clk_i) then
-                 
              case state is 
                  when IO_IDLE =>  
                      if write_enable_i = '1' then 

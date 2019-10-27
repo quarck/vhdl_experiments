@@ -13,7 +13,7 @@ entity controlunit is
         reset_i                 : in std_logic;
         error_o                 : out std_logic;
         
-        -- memory interface 
+        -- memory interface  
         mem_address_o           : out std_logic_vector(7 downto 0);
         mem_data_i              : in std_logic_vector(7 downto 0);
         mem_data_o              : out std_logic_vector(7 downto 0);
@@ -169,15 +169,15 @@ begin
 						when OP_AALU_RR => 
 							aalu_opcode_o <= instruction_code(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
-							aalu_left_o <= left_arg_reg_value;
-							aalu_right_o <= right_arg_reg_value;
+							aalu_left_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
+							aalu_right_o <= regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
 							cpu_state <= STORE;
 
 						when OP_AALU_RV => 
 							aalu_opcode_o <= instruction_code(3 downto 0);
 							aalu_carry_in_o <= flags.carry_out;
-							aalu_left_o <= left_arg_reg_value;
-							aalu_right_o <= right_arg_expl_value;
+							aalu_left_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
+							aalu_right_o <= "0000" & mem_data_i(3 downto 0);
 							cpu_state <= STORE;
 
 						when OP_SALU_RR | OP_SALU_RV =>
@@ -236,8 +236,8 @@ begin
 								when OP_SEVENSEGTRANSLATE =>
 									aalu_opcode_o <= ALU_SHR;
 									aalu_carry_in_o <= '0';									
-									aalu_left_o <= left_arg_reg_value;
-									aalu_right_o <= right_arg_expl_value;
+									aalu_left_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 4))));
+									aalu_right_o <= "0000" & mem_data_i(3 downto 0);
 									cpu_state <= EXECUTE_7SEG_1;
 									
 									
