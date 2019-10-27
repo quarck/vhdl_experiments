@@ -26,17 +26,20 @@ architecture rtl of memory is
 
     signal mem: mem_type:= (
 --0: start:
-		 OP_LDC & R0, x"FF",
-		 OP_SETCLR, R0 & R0,
+		 OP_LDC & R0, x"0d",
+		 OP_LDC & R1, x"07",
+		 OP_LDC & R2, x"44",
 		 
-		 OP_SETXY, R0 & R0, 		 
-		 OP_LDC & R1, x"44",
-		 OP_SETC, R1 & R1,
-		 OP_AALU_RV & ALU_ADD, R0 & x"1",
+		 OP_SETXY, R0 & R1,
+		 OP_SETC, R2 & R2,
 		 
-		 OP_WAIT, x"FF",
+		 OP_AALU_RV & ALU_ADD, R0 & x"5",
+		 OP_AALU_RV & ALU_ADD, R1 & x"3",
+		 OP_AALU_RV & ALU_ADD, R2 & x"1",
+		 
+		 -- OP_WAIT, x"FF",
 
-		 OP_JMP_A_UNCOND, x"04",
+		 OP_JMP_A_UNCOND, x"06",
 		 
 		 others => x"00"
 	);

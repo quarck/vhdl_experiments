@@ -49,6 +49,7 @@ end controlunit;
 architecture behaviour of controlunit is
 
 	type regfile_type is array (0 to 15) of std_logic_vector(7 downto 0);
+	
     signal regfile 					: regfile_type := (others => (others => '0'));
 	signal left_arg_reg_value		: std_logic_vector(7 downto 0);
 	signal right_arg_reg_value		: std_logic_vector(7 downto 0);
@@ -383,6 +384,7 @@ begin
 
 				when EXECUTE_SET_CHAR => 
 					vga_chr_o <= left_arg_reg_value;
+					vga_clr_o <= right_arg_reg_value;
 					vga_write_enable_o <= '1';					
 					cpu_state <= FETCH_0; 
 				
