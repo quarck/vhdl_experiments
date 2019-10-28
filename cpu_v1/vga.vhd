@@ -6,8 +6,8 @@ use ieee.std_logic_unsigned.all ;
 library work;
 
 entity vga is
-    port(
-        clk_i     		: in std_logic;
+	port(
+		clk_i			: in std_logic;
 		
 		pos_x_i			: in std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
 		pos_y_i			: in std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
@@ -15,13 +15,13 @@ entity vga is
 		clr_i			: in std_logic_vector(7 downto 0); 
 		write_enable_i	: in std_logic;
 
-        hsync_o       	: out std_logic;
-        vsync_o       	: out std_logic;
+		hsync_o			: out std_logic;
+		vsync_o			: out std_logic;
 	
-        red_o         	: out std_logic_vector(2 downto 0);
-        green_o       	: out std_logic_vector(2 downto 0);
-        blue_o        	: out std_logic_vector(2 downto 1)
-    );
+		red_o			: out std_logic_vector(2 downto 0);
+		green_o			: out std_logic_vector(2 downto 0);
+		blue_o			: out std_logic_vector(2 downto 1)
+	);
 end vga;
 
 architecture behavioral of vga is
@@ -31,14 +31,14 @@ architecture behavioral of vga is
 			clk_i	: in std_logic;
 			chr_i	: in std_logic_vector(6 downto 0);
 			gen_y_i : in integer range 0 to 15 := 0;
-			line_o 	: out std_logic_vector(0 to 7)
+			line_o	: out std_logic_vector(0 to 7)
 		);
 	end component;
 
 
 	type screen_mem_type is array (0 to 80*30) of std_logic_vector(7 downto 0);
 
-	signal char_memory  : screen_mem_type := (others => x"00");
+	signal char_memory	: screen_mem_type := (others => x"00");
 		
 	signal color_memory : screen_mem_type := ( others => x"FF" );
 
@@ -46,16 +46,16 @@ architecture behavioral of vga is
 	attribute ram_style of char_memory : signal is "block";
 	attribute ram_style of color_memory : signal is "block";
 
-    -- Intermediate register used internally
-    signal rgb           : std_logic_vector(7 downto 0) := x"f0";
+	-- Intermediate register used internally
+	signal rgb			 : std_logic_vector(7 downto 0) := x"f0";
 
-    -- Set the resolution of screen
-    signal pixel_x       : integer range 0 to 1023 := 640;
-    signal pixel_y       : integer range 0 to 1023 := 480;
+	-- Set the resolution of screen
+	signal pixel_x		 : integer range 0 to 1023 := 640;
+	signal pixel_y		 : integer range 0 to 1023 := 480;
 
-    -- Set the count from where it should start
-    signal next_pixel_x   : integer range 0 to 1023 := 640 + 1;
-    signal next_pixel_y   : integer range 0 to 1023 := 480;	  
+	-- Set the count from where it should start
+	signal next_pixel_x	  : integer range 0 to 1023 := 640 + 1;
+	signal next_pixel_y	  : integer range 0 to 1023 := 480;	  
 
 	signal chr_x : integer range 0 to 127 := 0;
 	signal chr_y : integer range 0 to 31 := 0;
@@ -77,10 +77,10 @@ begin
 	gen_y <= next_pixel_y mod 16;
 
 	rom: vga_chrg_rom port map(
-		clk_i 	=> clk_i,
+		clk_i	=> clk_i,
 		chr_i	=> chr(6 downto 0), 
 		gen_y_i	=> gen_y,
-		line_o 	=> chrg_line
+		line_o	=> chrg_line
 	);
 	
 write_process: 
@@ -104,14 +104,14 @@ write_process:
 	end process;
 	
 generate_signal: 
-    process (clk_i)
-        variable divide_by_4 : std_logic_vector(1 downto 0) := "00";
+	process (clk_i)
+		variable divide_by_4 : std_logic_vector(1 downto 0) := "00";
 		variable vram_line_base : integer range 0 to 40 * 80 := 0;
 
-    begin               
-        if rising_edge(clk_i) 
+	begin				
+		if rising_edge(clk_i) 
 		then
-			case divide_by_4 is 			
+			case divide_by_4 is				
 				when "00" => 
 					if next_pixel_x = 799
 					then
@@ -155,11 +155,11 @@ generate_signal:
 						rgb <= x"00";
 					end if;
 					
-					-- Maximum Horizontal count is limited to 799 for 640 x 480 display so that it fit's the screen. 						
+					-- Maximum Horizontal count is limited to 799 for 640 x 480 display so that it fit's the screen.						
 					if pixel_x = 799
 					then
 						pixel_x <= 0;
-						-- Maximum Vertical count is limited to 524 for  640 x 480 display so that it fit's the screen.						
+						-- Maximum Vertical count is limited to 524 for	 640 x 480 display so that it fit's the screen.						
 						if pixel_y = 524
 						then
 							pixel_y <= 0;
@@ -196,8 +196,8 @@ generate_signal:
 						blue_o <= "00";
 					end if;			
 			end case;
-		            
-            divide_by_4 := divide_by_4 + 1;
-        end if;
-    end process;                                
+					
+			divide_by_4 := divide_by_4 + 1;
+		end if;
+	end process;								
 end behavioral;

@@ -5,26 +5,26 @@ use ieee.numeric_std.all;
 use work.opcodes.all;
 
 entity memory is
-    generic (
-        mem_size : integer := 256
-    );
-    port
-    (
-        clk_i           : in std_logic; 
-        rst_i           : in std_logic;
-        address_i       : in std_logic_vector(7 downto 0);
-        data_i          : in std_logic_vector(7 downto 0);
-        data_o          : out std_logic_vector(7 downto 0);
-        mem_read_i      : in std_logic;
-        mem_write_i     : in std_logic
-    );
+	generic (
+		mem_size : integer := 256
+	);
+	port
+	(
+		clk_i			: in std_logic; 
+		rst_i			: in std_logic;
+		address_i		: in std_logic_vector(7 downto 0);
+		data_i			: in std_logic_vector(7 downto 0);
+		data_o			: out std_logic_vector(7 downto 0);
+		mem_read_i		: in std_logic;
+		mem_write_i		: in std_logic
+	);
 end memory;
 
 architecture rtl of memory is
 
-    type mem_type is array (0 to mem_size-1) of std_logic_vector(7 downto 0);
+	type mem_type is array (0 to mem_size-1) of std_logic_vector(7 downto 0);
 
-    signal mem: mem_type:= (
+	signal mem: mem_type:= (
 		--0: start:
 		OP_LDC & R0, x"01", -- A0 
 		OP_LDC & R1, x"00", -- A1
@@ -42,7 +42,7 @@ architecture rtl of memory is
 		OP_AALU_RR & ALU_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
 
 		OP_MOVE_RR, R0 & R2, 
-		OP_MOVE_RR, R1 & R3,     
+		OP_MOVE_RR, R1 & R3,	 
 		OP_MOVE_RR, R2 & R4, 
 		OP_MOVE_RR, R3 & R5, 
 
@@ -50,7 +50,7 @@ architecture rtl of memory is
 		OP_SETC, R2 & R3,
 			 
 
-		-- now - display the thing 	
+		-- now - display the thing	
 		OP_LDC & R15, x"00",
 		OP_OUT_GROUP & R15, x"06",
 		OP_MOVE_RR, R15 & R4,
@@ -75,8 +75,8 @@ architecture rtl of memory is
 		OP_LDC & R14, x"F0",
 		OP_AALU_RR & ALU_AND, R14 & R5,
 
-		-- OP_JMP_A_NZ,         x"00", 		-- go start if Acc != 0 (12-bit ovflow)						
-		OP_JMP_A_UNCOND,    x"0c", 		-- go loop in all other cases     
+		-- OP_JMP_A_NZ,			x"00",		-- go start if Acc != 0 (12-bit ovflow)						
+		OP_JMP_A_UNCOND,	x"0c",		-- go loop in all other cases	  
 
 		others => x"00"
 	);
@@ -85,19 +85,19 @@ architecture rtl of memory is
 	attribute ram_style of mem : signal is "block";
 
 begin
-    process (clk_i)
-    begin
-        if rising_edge(clk_i) 
-        then
-            if mem_write_i = '1' 
-            then 
-                mem(to_integer(unsigned(address_i))) <= data_i;
-                data_o <= data_i;
-            elsif mem_read_i = '1' 
-            then
-                data_o <= mem(to_integer(unsigned(address_i)));
-            end if;
-        end if;
+	process (clk_i)
+	begin
+		if rising_edge(clk_i) 
+		then
+			if mem_write_i = '1' 
+			then 
+				mem(to_integer(unsigned(address_i))) <= data_i;
+				data_o <= data_i;
+			elsif mem_read_i = '1' 
+			then
+				data_o <= mem(to_integer(unsigned(address_i)));
+			end if;
+		end if;
 
-    end process;
+	end process;
 end rtl;
