@@ -70,7 +70,7 @@ architecture behaviour of controlunit is
 	
 	-- signal clk_counter			   : std_logic_vector(31 downto 0) := (others => '0');
 
-	signal wait_counter				: std_logic_vector(20 downto 0) := (others => '0');
+	signal wait_counter				: std_logic_vector(24 downto 0) := (others => '0');
 
 begin
 
@@ -403,12 +403,12 @@ begin
 					cpu_state <= FETCH_0; 
 
 				when EXECUTE_WAIT_1 => 
-					wait_counter(20 downto 13) <= mem_data_i;
-					wait_counter(12 downto 0) <= (others => '0');
+					wait_counter(24 downto 17) <= mem_data_i;
+					wait_counter(16 downto 0) <= (others => '0');
 					cpu_state <= EXECUTE_WAIT_2;
 				
 				when EXECUTE_WAIT_2 => 
-					if wait_counter(20 downto 13) = 0 
+					if wait_counter(24 downto 17) = 0 
 					then 
 						cpu_state <= FETCH_0;
 					else

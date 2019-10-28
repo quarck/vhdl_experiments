@@ -46,7 +46,18 @@ architecture rtl of memory is
 		OP_MOVE_RR, R2 & R4, 
 		OP_MOVE_RR, R3 & R5, 
 
-		OP_SETXY, R0 & R1,
+		OP_MOVE_RR, R6 & R0,
+		OP_MOVE_RR, R7 & R1,
+		OP_LDC & R8, x"1f",
+		OP_AALU_RR & ALU_AND, R6 & R8,
+		OP_AALU_RR & ALU_AND, R7 & R8, 
+
+		OP_IN_GROUP & R8, x"00",
+		OP_AALU_RR & ALU_XOR, R6 & R8, 
+		OP_AALU_RR & ALU_XOR, R7 & R8, 
+
+		OP_SETXY, R6 & R7,
+		
 		OP_SETC, R2 & R3,
 			 
 
@@ -70,10 +81,10 @@ architecture rtl of memory is
 		OP_OUT_GROUP & R15, x"05",
 			
 			
-		OP_WAIT, x"01",
+		OP_WAIT, x"ff",
 
-		OP_LDC & R14, x"F0",
-		OP_AALU_RR & ALU_AND, R14 & R5,
+		-- OP_LDC & R14, x"F0",
+		-- OP_AALU_RR & ALU_AND, R14 & R5,
 
 		-- OP_JMP_A_NZ,			x"00",		-- go start if Acc != 0 (12-bit ovflow)						
 		OP_JMP_A_UNCOND,	x"0c",		-- go loop in all other cases	  
