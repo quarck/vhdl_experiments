@@ -57,7 +57,7 @@ begin
 					flags_o.overflow <= '0';
 				end if;
 				
-			when ALU_SUB | ALU_SUBC =>
+			when ALU_SUB | ALU_SUBC | ALU_CMP =>
 				temp := ('0'&left_arg_i) - ('0'&right_arg_i);
 
 				if operation_i = ALU_SUBC 
@@ -77,7 +77,7 @@ begin
 			when ALU_OR =>
 				temp := carry_i & (left_arg_i or right_arg_i);
 				
-			when ALU_AND =>
+			when ALU_AND | ALU_TEST =>
 				temp := carry_i & (left_arg_i and right_arg_i);
 
 			when ALU_XOR =>
@@ -128,7 +128,12 @@ begin
 		flags_o.carry_out <= temp(nbits);
 		flags_o.negative <= temp(nbits-1);
 
-		result_o <= temp(nbits-1 downto 0);
+		if operation_i /= ALU_CMP and operation_i /= ALU_TEST 
+		then 
+			result_o <= temp(nbits-1 downto 0);
+		else 
+			result_o <= left_arg_i; -- unchanged for cmp operation 
+		end if;
 		
 	end process;
 	

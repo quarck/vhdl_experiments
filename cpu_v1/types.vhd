@@ -11,8 +11,6 @@ package types is
 		overflow		: std_logic;
 	end record ALU_flags;
 
-	type ALU_arg_select is ( reg_port, value_port );
-
 	type cpu_state_type is (
 		
 		FETCH_0, 

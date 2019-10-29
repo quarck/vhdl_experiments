@@ -79,9 +79,9 @@ architecture rtl of memory is
 			
 		OP_IN_GROUP & R8, x"00", -- read DP sw
 		
-		OP_WAIT, x"01",
+		OP_WAIT, x"02",
 		OP_AALU_RV & ALU_SUB, R8 & x"1",
-		OP_JMP_A_NZ, x"FC", -- minus 6 - back to wait instruction 
+		OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction 
 		
 		-- OP_LDC & R14, x"F0",
 		-- OP_AALU_RR & ALU_AND, R14 & R5,

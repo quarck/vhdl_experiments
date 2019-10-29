@@ -18,6 +18,9 @@ package opcodes is
 	constant ALU_SHL  : std_logic_vector(3 downto 0) := "1010";
 	constant ALU_SHR  : std_logic_vector(3 downto 0) := "1011";
 	constant ALU_SHAR : std_logic_vector(3 downto 0) := "1100";
+	constant ALU_CMP  : std_logic_vector(3 downto 0) := "1101";
+	constant ALU_TEST : std_logic_vector(3 downto 0) := "1110";
+	
 	
 	-- heavy sync monsters taking multiple cycles to complete 
 	constant ALU_MUL  : std_logic_vector(3 downto 0) := "0001";
@@ -52,11 +55,41 @@ package opcodes is
 	-- Async ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
 	constant OP_AALU_RR		: std_logic_vector(3 downto 0) := "0100";
 
+	constant OP_ADD : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_ADD;
+	constant OP_ADDC: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_ADDC;
+	constant OP_SUB : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_SUB;
+	constant OP_SUBC: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_SUBC;
+	constant OP_NEG : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_NEG;
+	constant OP_OR	: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_OR;
+	constant OP_AND : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_AND;
+	constant OP_XOR : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_XOR;
+	constant OP_NOT : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_NOT;
+	constant OP_SHL : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_SHL;
+	constant OP_SHR : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_SHR;
+	constant OP_SHAR: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_SHAR;
+	constant OP_CMP : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_CMP;
+	constant OP_TEST: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_TEST;
+
 	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
 	constant OP_SALU_RR		: std_logic_vector(3 downto 0) := "0101"; 
 
 	-- Async ALU reg-val instructions, lower 4 bits - op, second byte - reg-val
 	constant OP_AALU_RV		: std_logic_vector(3 downto 0) := "0110";
+
+	constant OP_ADD_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_ADD;
+	constant OP_ADDC_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_ADDC;
+	constant OP_SUB_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SUB;
+	constant OP_SUBC_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SUBC;
+	constant OP_NEG_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_NEG;
+	constant OP_OR_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_OR;
+	constant OP_AND_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_AND;
+	constant OP_XOR_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_XOR;
+	constant OP_NOT_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_NOT;
+	constant OP_SHL_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SHL;
+	constant OP_SHR_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SHR;
+	constant OP_SHAR_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SHAR;
+	constant OP_CMP_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_CMP;
+	constant OP_TEST_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_TEST;
 	
 	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-val 
 	constant OP_SALU_RV		: std_logic_vector(3 downto 0) := "0111"; 
