@@ -28,6 +28,18 @@ entity controlunit is
 		aalu_result_i			: in std_logic_vector(7 downto 0);
 		aalu_flags_i			: in ALU_flags;
 
+		-- salu control 
+		salu_operation_o		: out std_logic_vector(3 downto 0);
+		salu_left_arg_high_o	: out std_logic_vector(7 downto 0);
+		salu_left_arg_low_o		: out std_logic_vector(7 downto 0);
+		salu_right_arg_o		: out std_logic_vector(7 downto 0);
+		salu_result_high_i		: in std_logic_vector(7 downto 0);
+		salu_result_low_i		: in std_logic_vector(7 downto 0);
+		salu_flags_i			: in ALU_flags;
+		salu_alu_start_o		: out std_logic;
+		salu_alu_ready_i		: in std_logic;
+
+
 		-- pio 
 		pio_address_o			: out std_logic_vector(7 downto 0);
 		pio_data_o				: out std_logic_vector(7 downto 0); -- data entering IO port 
@@ -100,6 +112,12 @@ begin
 			aalu_carry_in_o <= '0';
 			aalu_left_o	 <= (others => '0');
 			aalu_right_o <= (others => '0');
+			
+			salu_operation_o	 <= (others => '0');
+			salu_left_arg_high_o <= (others => '0');
+			salu_left_arg_low_o	 <= (others => '0');
+			salu_right_arg_o	 <= (others => '0');
+			salu_alu_start_o	<= '0';
 			
 			pio_address_o <= "00000000"; 
 			pio_data_o <= "00000000"; 
@@ -180,9 +198,13 @@ begin
 							aalu_right_o <= "0000" & mem_data_i(3 downto 0);
 							cpu_state <= STORE;
 
-						when OP_SALU_RR | OP_SALU_RV =>
-							error_o <= '1';
-							cpu_state <= STOP; -- SALU is not implemented yet
+						when OP_SALU_RR =>
+							salu_operation_o <= instruction_code(3 downto 0);
+							salu_left_arg_low_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '0')));
+							salu_left_arg_high_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '1')));
+							salu_right_arg_o <= regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
+							salu_alu_start_o <= '1';
+							cpu_state <= WAIT_AND_STORE_SALU; -- SALU is not implemented yet
 						
 						when OP_MOVE_GROUP => 
 							case instruction_code(3 downto 2) is 
@@ -353,6 +375,20 @@ begin
 					if pio_io_ready_i = '1' then 
 						cpu_state <= FETCH_0;
 						pio_write_enable_o <= '0';
+					end if;
+
+
+				when WAIT_AND_STORE_SALU => 
+					salu_alu_start_o <= '0';
+					if salu_alu_ready_i = '1' 
+					then 
+						regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '0'))) <= salu_result_low_i;
+						regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '1'))) <= salu_result_high_i;
+
+						flags <= salu_flags_i;
+						salu_operation_o <= ALU_NOP;
+
+						cpu_state <= FETCH_0;
 					end if;
 
 				when STORE	=>	

@@ -70,9 +70,6 @@ package opcodes is
 	constant OP_CMP : std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_CMP;
 	constant OP_TEST: std_logic_vector(7 downto 0) := OP_AALU_RR & ALU_TEST;
 
-	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
-	constant OP_SALU_RR		: std_logic_vector(3 downto 0) := "0101"; 
-
 	-- Async ALU reg-val instructions, lower 4 bits - op, second byte - reg-val
 	constant OP_AALU_RV		: std_logic_vector(3 downto 0) := "0110";
 
@@ -90,9 +87,24 @@ package opcodes is
 	constant OP_SHAR_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_SHAR;
 	constant OP_CMP_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_CMP;
 	constant OP_TEST_V	: std_logic_vector(7 downto 0) := OP_AALU_RV & ALU_TEST;
+
+	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - Hreg-reg 
+	constant OP_SALU_RR		: std_logic_vector(3 downto 0) := "0101"; 
 	
-	-- Sync ALU reg-reg instructions, lower 4 bits - op, second byte - reg-val 
-	constant OP_SALU_RV		: std_logic_vector(3 downto 0) := "0111"; 
+	-- for mul/imul, first register index points to a pair: 
+	-- r0 means r0:r1, r1 means compiler has an error, 
+	-- r2 means r2:r3, r3 means compiler has an error, 
+	-- etc, and the second argument is just a register by itself
+	-- thus, result is r(A+1):rA := rA*rB	
+	constant OP_MUL		: std_logic_vector(7 downto 0) := OP_SALU_RR & ALU_MUL;
+	constant OP_IMUL	: std_logic_vector(7 downto 0) := OP_SALU_RR & ALU_IMUL;
+	
+	-- for div/idiv, first register again means index pair
+	-- result is: rA 		:= r(A+1):rA / rB
+	--            r(A+1) 	:= r(A+1):rA rem rB
+	constant OP_DIV		: std_logic_vector(7 downto 0) := OP_SALU_RR & ALU_DIV;
+	constant OP_IDIV	: std_logic_vector(7 downto 0) := OP_SALU_RR & ALU_IDIV;
+	
 	
 	-- move instructions between reg and reg
 	constant OP_MOVE_GROUP	: std_logic_vector(3 downto 0) := "1000"; 
@@ -164,7 +176,8 @@ package opcodes is
 	constant OP_IN_GROUP	: std_logic_vector(3 downto 0) := "1001"; -- R <- port
 	constant OP_OUT_GROUP	: std_logic_vector(3 downto 0) := "1010"; -- port <- R
 
-	constant OP_UNUSED_GROUP_2	: std_logic_vector(3 downto 0) := "1011";
+	constant OP_UNUSED_GROUP_2		: std_logic_vector(3 downto 0) := "1011";
+	constant OP_UNUSED_GROUP_3		: std_logic_vector(3 downto 0) := "0111"; 
 		
 	-- special instructions 
 	

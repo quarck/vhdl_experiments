@@ -56,6 +56,8 @@ package types is
 		EXECUTE_SET_CHAR,
 		
 		EXECUTE_WAIT_1, EXECUTE_WAIT_2,
+		
+		WAIT_AND_STORE_SALU, 
 
 		STORE, 
 		
