@@ -38,7 +38,8 @@ begin
 	begin
 	
 		flags_o.overflow <= '0';
-		
+		flags_o.divide_by_zero <= '0'; -- never set by this ALU_ADD
+
 		left_as_uint := to_integer(unsigned(left_arg_i));
 		right_as_uint := to_integer(unsigned(right_arg_i));
 

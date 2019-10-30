@@ -70,47 +70,103 @@ clock_process:
 
 tb:
 	process
-   begin     
-      operation <= ALU_MUL;
+	begin     
+		operation <= ALU_MUL;
 		left_arg_high <= x"00";
 		left_arg_low <= x"CA";
 		right_arg <= x"23";
 		alu_start <= '1';
-		
 		wait for clk_period;
 		alu_start <= '0';
-		
-      wait for clk_period * 4;  -- expected result: 1B 9E
-		 
-		 operation <= ALU_IMUL;
-		alu_start <= '1';
-		
-		wait for clk_period;
-		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: 1B 9E
 
-       wait for clk_period * 4; -- expected result: F8 9E
+		operation <= ALU_IMUL;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4; -- expected result: F8 9E
 
 		left_arg_low <= x"23";
 		right_arg <= x"CA";
-
 		alu_start <= '1';
-		
 		wait for clk_period;
 		alu_start <= '0';
-
-       wait for clk_period * 4; -- expected result: F8 9E
+		wait for clk_period * 4; -- expected result: F8 9E
 
 
 		left_arg_low <= x"FF";
 		right_arg <= x"FF";
 		alu_start <= '1';
-		
 		wait for clk_period;
 		alu_start <= '0';
-		
-      wait for clk_period * 4;  -- expected result: 00 01 (thatx minus one times minus one)
+		wait for clk_period * 4;  -- expected result: 00 01 (thatx minus one times minus one)
 
 
-       wait; -- will wait forever
+		left_arg_high <= x"00";
+		left_arg_low <= x"FF";
+		right_arg <= x"03";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: 55 on low, 0 on high
+
+		left_arg_high <= x"00";
+		left_arg_low <= x"FE";
+		right_arg <= x"03";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: 54 on low, 2 on high
+
+		left_arg_high <= x"00";
+		left_arg_low <= x"FE";
+		right_arg <= x"13";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: D on low, 7 on high
+
+
+		left_arg_high <= x"04";
+		left_arg_low <= x"FE";
+		right_arg <= x"13";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: 43 on low, 5 on high
+
+		left_arg_high <= x"FF";
+		left_arg_low <= x"FE";
+		right_arg <= x"13";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: divide by zero error
+
+		left_arg_high <= x"04";
+		left_arg_low <= x"FE";
+		right_arg <= x"13";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: 43 on low, 5 on high
+
+		left_arg_high <= x"00";
+		left_arg_low <= x"01";
+		right_arg <= x"00";
+		operation <= ALU_DIV;
+		alu_start <= '1';
+		wait for clk_period;
+		alu_start <= '0';
+		wait for clk_period * 4;  -- expected result: divide by zero error
+
+
+		wait; -- will wait forever
     end process tb;
 end;

@@ -9,6 +9,7 @@ package types is
 		zero			: std_logic;
 		carry_out		: std_logic; -- means "borrow out" for sub
 		overflow		: std_logic;
+		divide_by_zero	: std_logic;
 	end record ALU_flags;
 
 	type cpu_state_type is (
