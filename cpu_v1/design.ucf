@@ -12,7 +12,10 @@
 
 CONFIG VCCAUX = "3.3" ;
 
-   NET "clk"                  LOC = V10     | IOSTANDARD = LVCMOS33 | PERIOD = 100MHz | CLOCK_DEDICATED_ROUTE  = TRUE;
+   NET "clk" LOC = V10 | IOSTANDARD = LVCMOS33;
+	NET "clk" CLOCK_DEDICATED_ROUTE  = TRUE;
+	NET "clk" TNM_NET = "clk";
+	TIMESPEC "TS_Clk" = PERIOD "clk" 10 ns HIGH 50%;
 
    #NET "CLK_12MHz"                   LOC = D9      | IOSTANDARD = LVCMOS33 | PERIOD = 12MHz ;
    
