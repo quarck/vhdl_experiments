@@ -12,7 +12,9 @@ entity sync_ALU is
 	);
 	port
 	(
-		clk_i					: std_logic;
+		clk_i					: in std_logic;
+		rst_i					: in std_logic; 
+		
 		operation_i				: in std_logic_vector(3 downto 0);
 		left_arg_high_i			: in std_logic_vector(nbits-1 downto 0);
 		left_arg_low_i			: in std_logic_vector(nbits-1 downto 0);
@@ -60,7 +62,7 @@ begin
 
 	alu_ready_o <= '1' when state = IDLE else '0'; 
 					
-	process (clk_i)
+	process (clk_i, rst_i)
 		variable m_mask			: std_logic_vector(2*nbits-1 downto 0);
 		variable m_acc			: std_logic_vector(2*nbits-1 downto 0);
 		variable m_left			: std_logic_vector(2*nbits-1 downto 0);
@@ -70,8 +72,15 @@ begin
 		variable im_l_sgn		: std_logic;
 		variable im_r_sgn		: std_logic;		
 	begin
-	
-		if rising_edge(clk_i)
+		
+		if rst_i = '1'
+		then
+			result_high_o	<= (others => '0');
+			result_low_o	<= (others => '0');
+			flags_o		<= (others => '0');
+			state	<= IDLE;
+
+		elsif rising_edge(clk_i)
 		then 
 			case state is 
 				when IDLE => 

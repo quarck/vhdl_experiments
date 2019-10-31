@@ -189,8 +189,8 @@ package opcodes is
 	
 	constant OP_SETXY			  : std_logic_vector(7 downto 0) := "00000011";
 	constant OP_SETC			  : std_logic_vector(7 downto 0) := "00000100";
-	constant OP_SETCLR			  : std_logic_vector(7 downto 0) := "00000101";
-	constant OP_WAIT			  : std_logic_vector(7 downto 0) := "00000110";
+
+	constant OP_WAIT			  : std_logic_vector(7 downto 0) := "00000101";
 	
 	
 end package opcodes;

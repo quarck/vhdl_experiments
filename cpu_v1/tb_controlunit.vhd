@@ -89,7 +89,9 @@ architecture behavior of TB_controlunit is
 		);
 		port
 		(
-			clk_i					: std_logic;
+			clk_i					: in std_logic;
+			rst_i					: in std_logic; 
+			
 			operation_i				: in std_logic_vector(3 downto 0);
 			left_arg_high_i			: in std_logic_vector(nbits-1 downto 0);
 			left_arg_low_i			: in std_logic_vector(nbits-1 downto 0);
@@ -199,7 +201,19 @@ architecture behavior of TB_controlunit is
 
    type mem_type is array (0 to 255) of std_logic_vector(7 downto 0);
    signal mem: mem_type := (
-		--0: start:
+	
+--		OP_LDC & R15, x"00",
+--		OP_OUT_GROUP & R15, x"06",
+--		OP_LDC & R15, x"3f",
+--		OP_SEVENSEGTRANSLATE, R15 & x"0",
+--		OP_OUT_GROUP & R15, x"05",
+--		OP_LDC & R15, x"01",
+--		OP_OUT_GROUP & R15, x"06",
+--		OP_LDC & R15, x"3f",
+--		OP_SEVENSEGTRANSLATE, R15 & x"4",
+--		OP_OUT_GROUP & R15, x"05",
+--		OP_HLT, OP_HLT, 
+	
 		OP_LDC & R0, x"01", -- A0 
 		OP_LDC & R1, x"00", -- A1
 		
@@ -210,10 +224,12 @@ architecture behavior of TB_controlunit is
 		OP_LDC & R5, x"00", -- C1
 
 		OP_LDC & R6, x"01", -- current X pos
+		OP_LDC & R7, x"4f", -- max X pos 
 		OP_LDC & R8, x"01", -- current Y pos
+		OP_LDC & R9, x"1D", -- max Y pos
 		OP_LDC & R10, x"03", -- current direction, XY, by two LSB bits 
 
---0x12: loop: 
+--0x16: loop: 
 		OP_MOVE_RR, R4 & R0,  -- C0 = A0
 		OP_ADD, R4 & R2, -- C0 = A0 + B0
 		OP_MOVE_RR, R5 & R1,  -- C1 = A1
@@ -242,17 +258,12 @@ architecture behavior of TB_controlunit is
 		OP_OUT_GROUP & R15, x"05",
 	
 		-- display a tiny dot on a VGA screen
-		-- first - clear the old one 
-		OP_LDC & R7, x"00",
-		OP_SETXY, R6 & R8,
-		OP_SETC, R7 & R7,
 		
 		-- now - increment the position 
 		OP_TEST_V, R10 & x"2", -- check the x direction 
-		OP_JMP_REL_Z, x"0c", -- negative_vx
+		OP_JMP_REL_Z, x"0a", -- negative_vx
 		
 		OP_ADD_V, R6 & x"1",
-		OP_LDC & R7, x"4f",
 		OP_CMP, R6 & R7, 
 		OP_JMP_REL_NZ, x"02", -- non-eq 
 		OP_XOR_V, R10 & x"2", -- invert x direction		
@@ -266,10 +277,9 @@ architecture behavior of TB_controlunit is
 -- do_y:
 
 		OP_TEST_V, R10 & x"1", -- check the x direction 
-		OP_JMP_REL_Z, x"0c", -- negative_vy
+		OP_JMP_REL_Z, x"0a", -- negative_vy
 		
 		OP_ADD_V, R8 & x"1",
-		OP_LDC & R9, x"1d",
 		OP_CMP, R8 & R9, 
 		OP_JMP_REL_NZ, x"02", -- non-eq 
 		OP_XOR_V, R10 & x"1", -- invert x direction		
@@ -286,14 +296,10 @@ architecture behavior of TB_controlunit is
 		OP_SETXY, R6 & R8,
 		OP_SETC, R4 & R5,
 
--- 		-- sleep loop 
--- 		OP_IN_GROUP & R11, x"00", -- read DP sw
--- 		OP_WAIT, x"08",
--- 		OP_SUB_V, R11 & x"1",
--- 		OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction 
-		
-
-		OP_JMP_A_UNCOND,	x"12",		-- go loop in all other cases	  
+		-- sleep loop 
+		OP_WAIT, x"01",
+	
+		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  
 
 		others => x"00"
 	);
@@ -365,6 +371,7 @@ begin
 		
 	s: sync_ALU port map (
 		clk_i					=> clk,
+		rst_i					=> reset_i,
 		operation_i				=> salu_operation,
 		left_arg_high_i			=> salu_left_arg_high,
 		left_arg_low_i			=> salu_left_arg_low,

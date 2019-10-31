@@ -117,7 +117,9 @@ architecture structural of cpu is
 		);
 		port
 		(
-			clk_i					: std_logic;
+			clk_i					: in std_logic;
+			rst_i					: in std_logic; 
+			
 			operation_i				: in std_logic_vector(3 downto 0);
 			left_arg_high_i			: in std_logic_vector(nbits-1 downto 0);
 			left_arg_low_i			: in std_logic_vector(nbits-1 downto 0);
@@ -213,6 +215,7 @@ begin
 	
 	s: sync_ALU port map (
 		clk_i					=> clk_i,
+		rst_i					=> reset_i,
 		operation_i				=> salu_operation,
 		left_arg_high_i			=> salu_left_arg_high,
 		left_arg_low_i			=> salu_left_arg_low,

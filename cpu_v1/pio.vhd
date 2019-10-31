@@ -60,9 +60,18 @@ begin
 		data_gpio_o		=> gpio_5_o
 	);
  
-	 process (clk_i)
-	 begin
-		 if rising_edge(clk_i) then
+	process (clk_i, rst_i)
+	begin
+		if rst_i = '1' 
+		then 
+			data_o <= (others => '0');
+			gpio_4_o <= (others => '0');
+			sw_led_mask <= (others => '0');
+			sw_seg_select <= (others => '0');
+			gpio_7_o <= (others => '0');
+			gpio_8_o <= (others => '0');
+		elsif rising_edge(clk_i) 
+		then
 			 case state is 
 				 when IO_IDLE =>  
 					 if write_enable_i = '1' then 
@@ -92,8 +101,8 @@ begin
 					 state <= IO_IDLE;
 			 end case;			 
 		 end if;
-	 end process;
+	end process;
 	 
-	 io_ready_o <= '1' when state = IO_IDLE else '0';
+	io_ready_o <= '1' when state = IO_IDLE else '0';
 	 
 end beh;

@@ -36,10 +36,12 @@ architecture rtl of memory is
 		OP_LDC & R5, x"00", -- C1
 
 		OP_LDC & R6, x"01", -- current X pos
+		OP_LDC & R7, x"4e", -- max X pos 
 		OP_LDC & R8, x"01", -- current Y pos
+		OP_LDC & R9, x"1C", -- max Y pos
 		OP_LDC & R10, x"03", -- current direction, XY, by two LSB bits 
 
---0x12: loop: 
+--0x16: loop: 
 		OP_MOVE_RR, R4 & R0,  -- C0 = A0
 		OP_ADD, R4 & R2, -- C0 = A0 + B0
 		OP_MOVE_RR, R5 & R1,  -- C1 = A1
@@ -68,17 +70,12 @@ architecture rtl of memory is
 		OP_OUT_GROUP & R15, x"05",
 	
 		-- display a tiny dot on a VGA screen
-		-- first - clear the old one 
-		OP_LDC & R7, x"00",
-		OP_SETXY, R6 & R8,
-		OP_SETC, R7 & R7,
 		
 		-- now - increment the position 
 		OP_TEST_V, R10 & x"2", -- check the x direction 
-		OP_JMP_REL_Z, x"0c", -- negative_vx
+		OP_JMP_REL_Z, x"0a", -- negative_vx
 		
 		OP_ADD_V, R6 & x"1",
-		OP_LDC & R7, x"4f",
 		OP_CMP, R6 & R7, 
 		OP_JMP_REL_NZ, x"02", -- non-eq 
 		OP_XOR_V, R10 & x"2", -- invert x direction		
@@ -92,10 +89,9 @@ architecture rtl of memory is
 -- do_y:
 
 		OP_TEST_V, R10 & x"1", -- check the x direction 
-		OP_JMP_REL_Z, x"0c", -- negative_vy
+		OP_JMP_REL_Z, x"0a", -- negative_vy
 		
 		OP_ADD_V, R8 & x"1",
-		OP_LDC & R9, x"1d",
 		OP_CMP, R8 & R9, 
 		OP_JMP_REL_NZ, x"02", -- non-eq 
 		OP_XOR_V, R10 & x"1", -- invert x direction		
@@ -110,16 +106,13 @@ architecture rtl of memory is
 
 		-- finally - dispay the new dot
 		OP_SETXY, R6 & R8,
-		OP_SETC, R4 & R5,
+		OP_SETC, R7 & R7,
 
 		-- sleep loop 
-		OP_IN_GROUP & R11, x"00", -- read DP sw
-		OP_WAIT, x"08",
-		OP_SUB_V, R11 & x"1",
-		OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction 
-		
+		OP_WAIT, x"0F",
+	
 
-		OP_JMP_A_UNCOND,	x"12",		-- go loop in all other cases	  
+		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  
 
 		others => x"00"
 	);

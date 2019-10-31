@@ -269,9 +269,6 @@ begin
 								when OP_SETC => 
 									cpu_state <= EXECUTE_SET_CHAR;
 								
-								when OP_SETCLR => 
-									cpu_state <= EXECUTE_SET_COLOR;
-
 								when OP_WAIT => 
 									cpu_state <= EXECUTE_WAIT_1;
 
@@ -437,21 +434,16 @@ begin
 					vga_write_enable_o <= '1';					
 					cpu_state <= FETCH_0; 
 				
-				when EXECUTE_SET_COLOR => 
-					vga_clr_o <= left_arg_reg_value;
-					cpu_state <= FETCH_0; 
-
 				when EXECUTE_WAIT_1 => 
-					wait_counter(24 downto 17) <= mem_data_i;
-					wait_counter(16 downto 0) <= (others => '0');
+					wait_counter(24 downto 17) <= not mem_data_i;
+					wait_counter(16 downto 0) <= (others => '1');
 					cpu_state <= EXECUTE_WAIT_2;
 				
 				when EXECUTE_WAIT_2 => 
-					if wait_counter(24 downto 17) = 0 
+					wait_counter <= wait_counter + 1; -- (0 => '1', others => '0');
+					if wait_counter = 0 
 					then 
 						cpu_state <= FETCH_0;
-					else
-						wait_counter <= wait_counter -1;
 					end if;
 
 				when others => 
