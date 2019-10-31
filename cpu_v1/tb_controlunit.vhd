@@ -32,6 +32,17 @@ architecture behavior of TB_controlunit is
 			aalu_result_i			: in std_logic_vector(7 downto 0);
 			aalu_flags_i			: in ALU_flags;
 
+			-- salu control 
+			salu_operation_o		: out std_logic_vector(3 downto 0);
+			salu_left_arg_high_o	: out std_logic_vector(7 downto 0);
+			salu_left_arg_low_o		: out std_logic_vector(7 downto 0);
+			salu_right_arg_o		: out std_logic_vector(7 downto 0);
+			salu_result_high_i		: in std_logic_vector(7 downto 0);
+			salu_result_low_i		: in std_logic_vector(7 downto 0);
+			salu_flags_i			: in ALU_flags;
+			salu_alu_start_o		: out std_logic;
+			salu_alu_ready_i		: in std_logic;
+
 			-- pio 
 			pio_address_o			: out std_logic_vector(7 downto 0);
 			pio_data_o				: out std_logic_vector(7 downto 0); -- data entering IO port 
@@ -72,7 +83,26 @@ architecture behavior of TB_controlunit is
 		);
 	end component;
 	
-	 component pio is 
+	component sync_ALU is
+		generic (
+			nbits	: integer := 8
+		);
+		port
+		(
+			clk_i					: std_logic;
+			operation_i				: in std_logic_vector(3 downto 0);
+			left_arg_high_i			: in std_logic_vector(nbits-1 downto 0);
+			left_arg_low_i			: in std_logic_vector(nbits-1 downto 0);
+			right_arg_i				: in std_logic_vector(nbits-1 downto 0);
+			result_high_o			: out std_logic_vector(nbits-1 downto 0);
+			result_low_o			: out std_logic_vector(nbits-1 downto 0);
+			flags_o					: out ALU_flags;
+			alu_start_i				: in std_logic;
+			alu_ready_o				: out std_logic
+		);
+	end component;
+	
+	component pio is 
 		 port (
 			  clk_i			  : in std_logic;
 			  rst_i			  : in std_logic;
@@ -120,6 +150,16 @@ architecture behavior of TB_controlunit is
 	signal alu_result			  : std_logic_vector(7 downto 0);
 	signal alu_flagss			   : ALU_flags;
 
+	-- salu control 
+	signal salu_operation		: std_logic_vector(3 downto 0);
+	signal salu_left_arg_high	: std_logic_vector(7 downto 0);
+	signal salu_left_arg_low	: std_logic_vector(7 downto 0);
+	signal salu_right_arg		: std_logic_vector(7 downto 0);
+	signal salu_result_high		: std_logic_vector(7 downto 0);
+	signal salu_result_low		: std_logic_vector(7 downto 0);
+	signal salu_flags			: ALU_flags;
+	signal salu_alu_start		: std_logic;
+	signal salu_alu_ready		: std_logic;
 	
 	-- pio 
 	signal pio_address			  : std_logic_vector(7 downto 0);
@@ -159,7 +199,6 @@ architecture behavior of TB_controlunit is
 
    type mem_type is array (0 to 255) of std_logic_vector(7 downto 0);
    signal mem: mem_type := (
-   
 		--0: start:
 		OP_LDC & R0, x"01", -- A0 
 		OP_LDC & R1, x"00", -- A1
@@ -169,21 +208,21 @@ architecture behavior of TB_controlunit is
 		
 		OP_LDC & R4, x"00", -- C0
 		OP_LDC & R5, x"00", -- C1
-			
---0x0c: loop: 
+
+		OP_LDC & R6, x"01", -- current X pos
+		OP_LDC & R8, x"01", -- current Y pos
+		OP_LDC & R10, x"03", -- current direction, XY, by two LSB bits 
+
+--0x12: loop: 
 		OP_MOVE_RR, R4 & R0,  -- C0 = A0
-		OP_AALU_RR & ALU_ADD, R4 & R2, -- C0 = A0 + B0
+		OP_ADD, R4 & R2, -- C0 = A0 + B0
 		OP_MOVE_RR, R5 & R1,  -- C1 = A1
-		OP_AALU_RR & ALU_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
+		OP_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
 
 		OP_MOVE_RR, R0 & R2, 
 		OP_MOVE_RR, R1 & R3,	 
 		OP_MOVE_RR, R2 & R4, 
 		OP_MOVE_RR, R3 & R5, 
-
-		OP_SETXY, R0 & R1,
-		OP_SETC, R2 & R3,
-			 
 
 		-- now - display the thing	
 		OP_LDC & R15, x"00",
@@ -191,29 +230,72 @@ architecture behavior of TB_controlunit is
 		OP_MOVE_RR, R15 & R4,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
-
 		OP_LDC & R15, x"01",
 		OP_OUT_GROUP & R15, x"06",
 		OP_MOVE_RR, R15 & R4,
 		OP_SEVENSEGTRANSLATE, R15 & x"4",
 		OP_OUT_GROUP & R15, x"05",
-
 		OP_LDC & R15, x"02",
 		OP_OUT_GROUP & R15, x"06",
 		OP_MOVE_RR, R15 & R5,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
-			
-			
-		OP_WAIT, x"ff",
+	
+		-- display a tiny dot on a VGA screen
+		-- first - clear the old one 
+		OP_LDC & R7, x"00",
+		OP_SETXY, R6 & R8,
+		OP_SETC, R7 & R7,
+		
+		-- now - increment the position 
+		OP_TEST_V, R10 & x"2", -- check the x direction 
+		OP_JMP_REL_Z, x"0c", -- negative_vx
+		
+		OP_ADD_V, R6 & x"1",
+		OP_LDC & R7, x"4f",
+		OP_CMP, R6 & R7, 
+		OP_JMP_REL_NZ, x"02", -- non-eq 
+		OP_XOR_V, R10 & x"2", -- invert x direction		
+		OP_JMP_REL_UNCOND, x"06",	-- do_y
 
-		OP_LDC & R14, x"F0",
-		OP_AALU_RR & ALU_AND, R14 & R5,
+-- negative_vx:
 
-		-- OP_JMP_A_NZ,			x"00",		-- go start if Acc != 0 (12-bit ovflow)						
-		OP_JMP_A_UNCOND,	x"0c",		-- go loop in all other cases	  
-			 
-			 others => x"00"
+		OP_SUB_V, R6 & x"1",
+		OP_JMP_REL_NZ, x"02", 
+		OP_XOR_V, R10 & x"2", -- invert x direction
+-- do_y:
+
+		OP_TEST_V, R10 & x"1", -- check the x direction 
+		OP_JMP_REL_Z, x"0c", -- negative_vy
+		
+		OP_ADD_V, R8 & x"1",
+		OP_LDC & R9, x"1d",
+		OP_CMP, R8 & R9, 
+		OP_JMP_REL_NZ, x"02", -- non-eq 
+		OP_XOR_V, R10 & x"1", -- invert x direction		
+		OP_JMP_REL_UNCOND, x"06",	-- do_display
+
+-- negative_vy:
+		OP_SUB_V, R8 & x"1",
+		OP_JMP_REL_NZ, x"02", 
+		OP_XOR_V, R10 & x"1", -- invert x direction
+
+-- do_display: 
+
+		-- finally - dispay the new dot
+		OP_SETXY, R6 & R8,
+		OP_SETC, R4 & R5,
+
+-- 		-- sleep loop 
+-- 		OP_IN_GROUP & R11, x"00", -- read DP sw
+-- 		OP_WAIT, x"08",
+-- 		OP_SUB_V, R11 & x"1",
+-- 		OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction 
+		
+
+		OP_JMP_A_UNCOND,	x"12",		-- go loop in all other cases	  
+
+		others => x"00"
 	);
 
 begin
@@ -236,6 +318,16 @@ begin
 		aalu_carry_in_o			=> alu_carry_in,
 		aalu_result_i			=> alu_result,
 		aalu_flags_i			=> alu_flagss,
+
+		salu_operation_o		=> salu_operation,
+		salu_left_arg_high_o	=> salu_left_arg_high,
+		salu_left_arg_low_o		=> salu_left_arg_low,
+		salu_right_arg_o		=> salu_right_arg,
+		salu_result_high_i		=> salu_result_high,
+		salu_result_low_i		=> salu_result_low,
+		salu_flags_i			=> salu_flags,
+		salu_alu_start_o		=> salu_alu_start,
+		salu_alu_ready_i		=> salu_alu_ready,
 
 		pio_address_o			=> pio_address,
 		pio_data_o				=> pio_data_from_cpu,
@@ -269,6 +361,20 @@ begin
 			result_o			=> alu_result, 
 			flags_o				=> alu_flagss 
 		);
+		
+		
+	s: sync_ALU port map (
+		clk_i					=> clk,
+		operation_i				=> salu_operation,
+		left_arg_high_i			=> salu_left_arg_high,
+		left_arg_low_i			=> salu_left_arg_low,
+		right_arg_i				=> salu_right_arg,
+		result_high_o			=> salu_result_high,
+		result_low_o			=> salu_result_low,
+		flags_o					=> salu_flags,
+		alu_start_i				=> salu_alu_start,
+		alu_ready_o				=> salu_alu_ready
+	);		
 
 memory: 
 	process (clk, mem_address_o, mem_data_o, mem_read_o, mem_write_o)

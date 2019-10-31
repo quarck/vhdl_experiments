@@ -204,7 +204,7 @@ begin
 							salu_left_arg_high_o <= regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '1')));
 							salu_right_arg_o <= regfile(to_integer(unsigned(mem_data_i(3 downto 0))));
 							salu_alu_start_o <= '1';
-							cpu_state <= WAIT_AND_STORE_SALU; -- SALU is not implemented yet
+							cpu_state <= WAIT_AND_STORE_SALU_1; -- SALU is not implemented yet
 						
 						when OP_MOVE_GROUP => 
 							case instruction_code(3 downto 2) is 
@@ -378,8 +378,11 @@ begin
 					end if;
 
 
-				when WAIT_AND_STORE_SALU => 
+				when WAIT_AND_STORE_SALU_1 => 
 					salu_alu_start_o <= '0';
+					cpu_state <= WAIT_AND_STORE_SALU_2;
+					
+				when WAIT_AND_STORE_SALU_2 => 
 					if salu_alu_ready_i = '1' 
 					then 
 						regfile(to_integer(unsigned(mem_data_i(7 downto 5) & '0'))) <= salu_result_low_i;

@@ -34,28 +34,21 @@ architecture rtl of memory is
 		
 		OP_LDC & R4, x"00", -- C0
 		OP_LDC & R5, x"00", -- C1
-			
---0x0c: loop: 
+
+		OP_LDC & R6, x"01", -- current X pos
+		OP_LDC & R8, x"01", -- current Y pos
+		OP_LDC & R10, x"03", -- current direction, XY, by two LSB bits 
+
+--0x12: loop: 
 		OP_MOVE_RR, R4 & R0,  -- C0 = A0
-		OP_AALU_RR & ALU_ADD, R4 & R2, -- C0 = A0 + B0
+		OP_ADD, R4 & R2, -- C0 = A0 + B0
 		OP_MOVE_RR, R5 & R1,  -- C1 = A1
-		OP_AALU_RR & ALU_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
+		OP_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
 
 		OP_MOVE_RR, R0 & R2, 
 		OP_MOVE_RR, R1 & R3,	 
 		OP_MOVE_RR, R2 & R4, 
 		OP_MOVE_RR, R3 & R5, 
-
-		OP_MOVE_RR, R6 & R0,
-		OP_MOVE_RR, R7 & R1,
-		OP_LDC & R8, x"7f",
-		OP_AALU_RR & ALU_AND, R6 & R8,
-		OP_AALU_RV & ALU_SHR, R6 & x"1",
-		OP_LDC & R8, x"3f",
-		OP_AALU_RR & ALU_AND, R7 & R8, 
-		OP_AALU_RV & ALU_SHR, R7 & x"1",
-		OP_SETXY, R6 & R7,
-		OP_SETC, R2 & R3,
 
 		-- now - display the thing	
 		OP_LDC & R15, x"00",
@@ -63,30 +56,70 @@ architecture rtl of memory is
 		OP_MOVE_RR, R15 & R4,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
-
 		OP_LDC & R15, x"01",
 		OP_OUT_GROUP & R15, x"06",
 		OP_MOVE_RR, R15 & R4,
 		OP_SEVENSEGTRANSLATE, R15 & x"4",
 		OP_OUT_GROUP & R15, x"05",
-
 		OP_LDC & R15, x"02",
 		OP_OUT_GROUP & R15, x"06",
 		OP_MOVE_RR, R15 & R5,
 		OP_SEVENSEGTRANSLATE, R15 & x"0",
 		OP_OUT_GROUP & R15, x"05",
-			
-			
-		OP_IN_GROUP & R8, x"00", -- read DP sw
+	
+		-- display a tiny dot on a VGA screen
+		-- first - clear the old one 
+		OP_LDC & R7, x"00",
+		OP_SETXY, R6 & R8,
+		OP_SETC, R7 & R7,
 		
-		OP_WAIT, x"02",
-		OP_AALU_RV & ALU_SUB, R8 & x"1",
+		-- now - increment the position 
+		OP_TEST_V, R10 & x"2", -- check the x direction 
+		OP_JMP_REL_Z, x"0c", -- negative_vx
+		
+		OP_ADD_V, R6 & x"1",
+		OP_LDC & R7, x"4f",
+		OP_CMP, R6 & R7, 
+		OP_JMP_REL_NZ, x"02", -- non-eq 
+		OP_XOR_V, R10 & x"2", -- invert x direction		
+		OP_JMP_REL_UNCOND, x"06",	-- do_y
+
+-- negative_vx:
+
+		OP_SUB_V, R6 & x"1",
+		OP_JMP_REL_NZ, x"02", 
+		OP_XOR_V, R10 & x"2", -- invert x direction
+-- do_y:
+
+		OP_TEST_V, R10 & x"1", -- check the x direction 
+		OP_JMP_REL_Z, x"0c", -- negative_vy
+		
+		OP_ADD_V, R8 & x"1",
+		OP_LDC & R9, x"1d",
+		OP_CMP, R8 & R9, 
+		OP_JMP_REL_NZ, x"02", -- non-eq 
+		OP_XOR_V, R10 & x"1", -- invert x direction		
+		OP_JMP_REL_UNCOND, x"06",	-- do_display
+
+-- negative_vy:
+		OP_SUB_V, R8 & x"1",
+		OP_JMP_REL_NZ, x"02", 
+		OP_XOR_V, R10 & x"1", -- invert x direction
+
+-- do_display: 
+
+		-- finally - dispay the new dot
+		OP_SETXY, R6 & R8,
+		OP_SETC, R4 & R5,
+
+		-- sleep loop 
+		OP_IN_GROUP & R11, x"00", -- read DP sw
+		OP_WAIT, x"08",
+		OP_SUB_V, R11 & x"1",
 		OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction 
 		
-		-- OP_LDC & R14, x"F0",
-		-- OP_AALU_RR & ALU_AND, R14 & R5,
 
-		OP_JMP_A_UNCOND,	x"0c",		-- go loop in all other cases	  
+		OP_JMP_A_UNCOND,	x"12",		-- go loop in all other cases	  
 
 		others => x"00"
 	);
