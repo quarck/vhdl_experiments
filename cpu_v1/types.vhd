@@ -12,6 +12,8 @@ package types is
 		divide_by_zero	: std_logic;
 	end record ALU_flags;
 
+	type data_select is ( DS_MEMORY, DS_PIO );
+
 	type cpu_state_type is (
 		
 		FETCH_0, 
@@ -54,9 +56,11 @@ package types is
 		EXECUTE_SET_XY, 
 		EXECUTE_SET_CHAR,
 		
-		EXECUTE_WAIT_1, EXECUTE_WAIT_2,
+		EXECUTE_WAIT_1, 
+		EXECUTE_WAIT_2,
 		
-		WAIT_AND_STORE_SALU_1, WAIT_AND_STORE_SALU_2,
+		WAIT_AND_STORE_SALU_1, 
+		WAIT_AND_STORE_SALU_2,
 
 		STORE, 
 		

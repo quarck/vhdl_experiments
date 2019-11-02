@@ -101,28 +101,30 @@ architecture structural of soc is
 			reset_i					: in std_logic;
 			error_o					: out std_logic;
 			
-			-- memory interface 
-			mem_address_o			: out std_logic_vector(7 downto 0);
-			mem_data_i				: in std_logic_vector(7 downto 0);
-			mem_data_o				: out std_logic_vector(7 downto 0);
-			mem_read_o				: out std_logic;
-			mem_write_o				: out std_logic;
+			-- address bus - multiplexed between memory and PIO 
+			address_o				: out std_logic_vector(7 downto 0);
 			
-			-- pio 
-			pio_address_o			: out std_logic_vector(7 downto 0);
-			pio_data_o				: out std_logic_vector(7 downto 0); -- data entering IO port 
-			pio_data_i				: in std_logic_vector(7 downto 0);
-			pio_write_enable_o		: out std_logic;
-			pio_read_enable_o		: out std_logic;
+			-- data buses - multiplexed between port and memory 
+			data_i					: in std_logic_vector(7 downto 0);
+			data_o					: out std_logic_vector(7 downto 0);
+
+			-- read/write controls for both memory and PIO
+			read_enable_o			: out std_logic;
+			read_select_o			: out data_select;
+			write_enable_o			: out std_logic;
+			write_select_o			: out data_select;
+
 			pio_io_ready_i			: in std_logic;
-			
+
 			-- direct access to the video adapter 
+			-- todo - remove this later in favour of using I/O ports 
+			-- (even if we use dedicated opcodes for VGA, we can just use particular 
+			-- port numbers for these 
 			vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
 			vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
 			vga_chr_o				: out std_logic_vector(7 downto 0); 
 			vga_clr_o				: out std_logic_vector(7 downto 0); 
 			vga_write_enable_o		: out std_logic
-			
 		);
 	end component;
 	
@@ -132,8 +134,7 @@ architecture structural of soc is
 		);
 		port
 		(
-			clk_i			: in std_logic; 
-			rst_i			: in std_logic;
+			clk_i				: in std_logic;
 			address_i		: in std_logic_vector(7 downto 0);
 			data_i			: in std_logic_vector(7 downto 0);
 			data_o			: out std_logic_vector(7 downto 0);
@@ -191,18 +192,23 @@ architecture structural of soc is
 	signal reset			: std_logic;
 	signal error			: std_logic;
 
-	signal mem_address		: std_logic_vector(7 downto 0);
-	signal data_from_mem_to_cpu : std_logic_vector(7 downto 0);
-	signal data_from_cpu_to_mem : std_logic_vector(7 downto 0);
-	signal mem_read			: std_logic;
-	signal mem_write		: std_logic;
+	-- address bus - multiplexed between memory and PIO 
+	signal address				: std_logic_vector(7 downto 0);
+	
+	-- data buses - multiplexed between port and memory 
+	signal data_i				: std_logic_vector(7 downto 0);
+	signal data_o				: std_logic_vector(7 downto 0);
+	signal mem_data_r			: std_logic_vector(7 downto 0);
+	signal pio_data_r			: std_logic_vector(7 downto 0);
 
-	signal pio_address		: std_logic_vector(7 downto 0);
-	signal data_from_cpu_to_pio		: std_logic_vector(7 downto 0); -- data entering IO port 
-	signal data_from_pio_to_cpu		: std_logic_vector(7 downto 0);
-	signal pio_write_enable : std_logic;
-	signal pio_read_enable	: std_logic;
-	signal pio_io_ready		: std_logic;
+	-- read/write controls for both memory and PIO
+	signal read_enable			: std_logic;
+	signal read_select			: data_select;
+	signal write_enable			: std_logic;
+	signal write_select			: data_select;
+
+	signal pio_io_ready			: std_logic;
+
 
 	signal in_port_0 : std_logic_vector (7 downto 0); -- dp switches 
 	signal in_port_1 : std_logic_vector (7 downto 0);	-- push btns
@@ -225,41 +231,67 @@ architecture structural of soc is
 	signal v_clr			: std_logic_vector(7 downto 0); 
 	signal v_write_enable	: std_logic;
 
+	signal mem_read_enable : std_logic;
+	signal mem_write_enable : std_logic;
+	signal pio_read_enable : std_logic;
+	signal pio_write_enable : std_logic;
 	
 begin 
+	mem_read_enable <= '1' when read_enable = '1' and read_select = DS_MEMORY else '0';
+	mem_write_enable <= '1' when write_enable = '1' and write_select = DS_MEMORY else '0';
+	pio_read_enable <= '1' when read_enable = '1' and read_select = DS_PIO else '0';
+	pio_write_enable <= '1' when write_enable = '1' and write_select = DS_PIO else '0';
+
+	data_i <= mem_data_r when read_select = DS_MEMORY else pio_data_r;
 
 	c : cpu port map (
 		clk_i					=> clk,
 		reset_i					=> reset,
 		error_o					=> error,
+
+		-- address bus - multiplexed between memory and PIO 
+		address_o				=> address,
 		
-		mem_address_o			=> mem_address,
-		mem_data_i				=> data_from_mem_to_cpu,
-		mem_data_o				=> data_from_cpu_to_mem,
-		mem_read_o				=> mem_read,
-		mem_write_o				=> mem_write,
-			
-		pio_address_o			=> pio_address,
-		pio_data_o				=> data_from_cpu_to_pio,
-		pio_data_i				=> data_from_pio_to_cpu,
-		pio_write_enable_o		=> pio_write_enable,
-		pio_read_enable_o		=> pio_read_enable,
+		-- data buses - multiplexed between port and memory 
+		data_i					=> data_i,
+		data_o					=> data_o,
+
+		-- read/write controls for both memory and PIO
+		read_enable_o			=> read_enable,
+		read_select_o			=> read_select,
+		write_enable_o			=> write_enable,
+		write_select_o			=> write_select,
+
 		pio_io_ready_i			=> pio_io_ready,
-		
+
+
+		-- direct access to the video adapter 
+		-- todo - remove this later in favour of using I/O ports 
+		-- (even if we use dedicated opcodes for VGA, we can just use particular 
+		-- port numbers for these 
 		vga_pos_x_o				=> v_pos_x,
 		vga_pos_y_o				=> v_pos_y,
 		vga_chr_o				=> v_chr,
 		vga_clr_o				=> v_clr,
 		vga_write_enable_o		=> v_write_enable
 	);
+
+	m: memory port map (
+		clk_i				=> clk,
+		address_i		=> address,
+		data_i			=> data_o,
+		data_o			=> mem_data_r,
+		mem_read_i		=> mem_read_enable,
+		mem_write_i		=> mem_write_enable
+	);
 					
 	p: pio port map (
 		clk_i					=> clk,
 		rst_i					=> reset,
 			
-		port_address_i			=> pio_address,
-		data_i					=> data_from_cpu_to_pio,
-		data_o					=> data_from_pio_to_cpu,
+		port_address_i			=> address,
+		data_i					=> data_o,
+		data_o					=> pio_data_r,
 		write_enable_i			=> pio_write_enable,
 		read_enable_i			=> pio_read_enable,
 		io_ready_o				=> pio_io_ready,
@@ -276,17 +308,7 @@ begin
 		gpio_8_o				=> out_port_8
 	);
 	
-	
-	m: memory port map (
-		clk_i			=> clk,
-		rst_i			=> reset,		 
-		address_i		=> mem_address,
-		data_i			=> data_from_cpu_to_mem,
-		data_o			=> data_from_mem_to_cpu,
-		mem_read_i		=> mem_read,
-		mem_write_i		=> mem_write
-	);
-	
+		
 	v: vga port map (
 		clk_i			=> clk,
 		

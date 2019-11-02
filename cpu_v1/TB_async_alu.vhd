@@ -10,65 +10,78 @@ END TB_async_alu;
 
 ARCHITECTURE behavior OF TB_async_alu IS 
 
-    component async_ALU is
-        generic (
-            nbits   : integer := 8
-        );
-        port
-        (
-            operation               : in std_logic_vector(3 downto 0);
-            regfile_read_port_a     : in std_logic_vector(nbits-1 downto 0);
-            regfile_read_port_b     : in std_logic_vector(nbits-1 downto 0);
-            direct_arg_port_b       : in std_logic_vector(nbits-1 downto 0);
-            b_val_select            : in ALU_arg_select;
-            carry_in                : in std_logic;
-            result                  : out std_logic_vector(nbits-1 downto 0);
-            flags                   : out ALU_flags
-        );
-    end component;
+	component ALU is
+		generic (
+			nbits	: integer := 8
+		);
+		port
+		(
+			clk_i				: in std_logic;
+			rst_i				: in std_logic; 
+			operation_i			: in std_logic_vector(4 downto 0);
+			left_h_i			: in std_logic_vector(nbits-1 downto 0);
+			left_l_i			: in std_logic_vector(nbits-1 downto 0);
+			right_l_i			: in std_logic_vector(nbits-1 downto 0);
+			carry_i				: in std_logic;
+			result_h_o			: out std_logic_vector(nbits-1 downto 0);
+			result_l_o			: out std_logic_vector(nbits-1 downto 0);
+			flags_o				: out ALU_flags;
+			sync_ready_o		: out std_logic
+		);
+	end component;
 
 
-    signal operation                : std_logic_vector(3 downto 0) := "0000";
-    signal regfile_read_port_a      : std_logic_vector(7 downto 0) := (others => '0');
-    signal regfile_read_port_b      : std_logic_vector(7 downto 0) := (others => '0');
-    signal direct_arg_port_b        : std_logic_vector(7 downto 0) := (others => '0');
-    signal b_val_select             : ALU_arg_select := reg_port;
-    signal carry_in                 : std_logic;
-    signal result                   : std_logic_vector(7 downto 0);
-    signal flags                    : ALU_flags;
+   -- Clock period definitions
+	constant clk_period : time := 10 ns; 
 
-BEGIN
+   signal clk						: std_logic;
+	signal rst						: std_logic;
+	signal operation				: std_logic_vector(4 downto 0);
+	signal left_arg_high			: std_logic_vector(7 downto 0);
+	signal left_arg_low				: std_logic_vector(7 downto 0);
+	signal right_arg				: std_logic_vector(7 downto 0);
+	signal result_high				: std_logic_vector(7 downto 0);
+	signal result_low				: std_logic_vector(7 downto 0);
+	signal flags					: ALU_flags;
+	signal carry_in				: std_logic;
+	signal alu_ready				: std_logic;
+
+begin
 
   -- Component Instantiation
-    uut: async_ALU 
-        port map(
-            operation           => operation            ,
-            regfile_read_port_a => regfile_read_port_a  ,
-            regfile_read_port_b => regfile_read_port_b  ,
-            direct_arg_port_b   => direct_arg_port_b    ,
-            b_val_select        => b_val_select         ,
-            carry_in            => carry_in             ,
-            result              => result               ,
-            flags               => flags                
-        );
+    uut: ALU port map(
+		clk_i				=> clk,
+	    rst_i				=> rst,
+	    operation_i			=> operation,
+	    left_h_i			=> left_arg_high,
+	    left_l_i			=> left_arg_low,
+	    right_l_i			=> right_arg,
+	    carry_i				=> carry_in,
+	    result_h_o			=> result_high,
+	    result_l_o			=> result_low,
+	    flags_o				=> flags,
+	    sync_ready_o		=> alu_ready
+	);
 
-     tb : PROCESS
-     BEGIN
-     
+clock_process: 
+	process -- clock generator process 
+	begin
+		clk <= '0';
+		wait for clk_period/2;
+		clk <= '1';
+		wait for clk_period/2;
+	end process;
+
+tb:
+    process
+    begin
         operation <= ALU_ADD;
-        regfile_read_port_a <= x"33";
-        regfile_read_port_b <= x"55";
-        direct_arg_port_b <= x"aa";
+        left_arg_low <= x"33";
+        right_arg <= x"55";
         carry_in <= '0';
-
-        wait for 10 ns; 
-
-        b_val_select <= value_port; 
         
         wait for 10 ns; 
 
         wait; -- will wait forever
-     END PROCESS tb;
-  --  End Test Bench 
-
-END;
+    end process tb;
+end;

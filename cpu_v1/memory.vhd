@@ -10,8 +10,7 @@ entity memory is
 	);
 	port
 	(
-		clk_i			: in std_logic; 
-		rst_i			: in std_logic;
+		clk_i				: in std_logic;
 		address_i		: in std_logic_vector(7 downto 0);
 		data_i			: in std_logic_vector(7 downto 0);
 		data_o			: out std_logic_vector(7 downto 0);
@@ -123,17 +122,16 @@ architecture rtl of memory is
 begin
 	process (clk_i)
 	begin
-		if rising_edge(clk_i) 
+		if rising_edge(clk_i)
 		then
 			if mem_write_i = '1' 
 			then 
 				mem(to_integer(unsigned(address_i))) <= data_i;
-				data_o <= data_i;
+				data_o <= data_i;			
 			elsif mem_read_i = '1' 
 			then
 				data_o <= mem(to_integer(unsigned(address_i)));
 			end if;
 		end if;
-
 	end process;
 end rtl;
