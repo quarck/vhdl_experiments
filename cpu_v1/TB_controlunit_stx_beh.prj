@@ -1,5 +1,7 @@
 vhdl isim_temp "types.vhd"
+vhdl isim_temp "sevenseg.vhd"
 vhdl isim_temp "opcodes.vhd"
+vhdl isim_temp "pio.vhd"
 vhdl isim_temp "controlunit.vhd"
-vhdl isim_temp "async_alu.vhd"
+vhdl isim_temp "alu.vhd"
 vhdl isim_temp "tb_controlunit.vhd"

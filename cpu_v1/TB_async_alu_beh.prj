@@ -1,4 +1,0 @@
-vhdl work "types.vhd"
-vhdl work "opcodes.vhd"
-vhdl work "async_alu.vhd"
-vhdl work "TB_async_alu.vhd"

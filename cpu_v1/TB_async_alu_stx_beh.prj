@@ -1,4 +1,4 @@
 vhdl isim_temp "types.vhd"
 vhdl isim_temp "opcodes.vhd"
-vhdl isim_temp "async_alu.vhd"
+vhdl isim_temp "alu.vhd"
 vhdl isim_temp "TB_async_alu.vhd"
