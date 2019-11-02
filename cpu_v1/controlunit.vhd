@@ -358,13 +358,15 @@ begin
 					if alu_sync_ready_i = '1' 
 					then 
 						regfile(conv_integer(instruction_data(7 downto 5) & '0')) <= alu_result_l_i;
-						regfile(conv_integer(instruction_data(7 downto 5) & '1')) <= alu_result_h_i;
-
 						flags <= alu_flags_i;
 						alu_operation_o <= ALU_NOP;
 
-						cpu_state <= FETCH_0;
+						cpu_state <= WAIT_AND_STORE_SALU_3;
 					end if;
+					
+				when WAIT_AND_STORE_SALU_3 =>
+					regfile(conv_integer(instruction_data(7 downto 5) & '1')) <= alu_result_h_i;
+					cpu_state <= FETCH_0;
 
 				when STORE	=>	
 					regfile(conv_integer(instruction_data(7 downto 4))) <= alu_result_l_i;

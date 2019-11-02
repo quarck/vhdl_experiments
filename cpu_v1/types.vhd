@@ -61,6 +61,7 @@ package types is
 		
 		WAIT_AND_STORE_SALU_1, 
 		WAIT_AND_STORE_SALU_2,
+		WAIT_AND_STORE_SALU_3,
 
 		STORE, 
 		

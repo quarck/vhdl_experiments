@@ -105,14 +105,14 @@ architecture rtl of memory is
 
 		-- finally - dispay the new dot
 		OP_SETXY, R6 & R8,
-		OP_SETC, R7 & R7,
+		OP_SETC, R4 & R5,
 
 		-- sleep loop 
 		 OP_IN_GROUP & R11, x"00", -- read DP sw
-		 OP_AALU_RV & ALU_ADD, R11 & x"1",
+		 OP_ADD, R11 & x"1",
 
 		 OP_WAIT, x"02",
-		 OP_AALU_RV & ALU_SUB, R11 & x"1",
+		 OP_SUB, R11 & x"1",
 		 OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction
 
 	
