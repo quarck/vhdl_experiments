@@ -181,9 +181,10 @@ begin
 
 						when OP_SALU_RR =>
 							alu_operation_o <= instruction_code(4 downto 0);
-							alu_sync_select_o <= '0';
-							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 5) & '0'));
-							alu_left_h_o <= regfile(conv_integer(data_i(7 downto 5) & '1'));
+							alu_sync_select_o <= '1';
+							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
+							alu_left_h_o <= regfile(conv_integer(data_i(7 downto 4) xor "0001"));
+							alu_right_l_o <= (others => '0');
 							alu_right_l_o <= regfile(conv_integer(data_i(3 downto 0)));
 							cpu_state <= WAIT_AND_STORE_SALU_1; -- SALU is not implemented yet
 						
@@ -357,15 +358,14 @@ begin
 				when WAIT_AND_STORE_SALU_2 => 
 					if alu_sync_ready_i = '1' 
 					then 
-						regfile(conv_integer(instruction_data(7 downto 5) & '0')) <= alu_result_l_i;
+						regfile(conv_integer(instruction_code(7 downto 4))) <= alu_result_l_i;
 						flags <= alu_flags_i;
 						alu_operation_o <= ALU_NOP;
-
 						cpu_state <= WAIT_AND_STORE_SALU_3;
 					end if;
 					
 				when WAIT_AND_STORE_SALU_3 =>
-					regfile(conv_integer(instruction_data(7 downto 5) & '1')) <= alu_result_h_i;
+					regfile(conv_integer(instruction_code(7 downto 4) xor "0001" )) <= alu_result_h_i;
 					cpu_state <= FETCH_0;
 
 				when STORE	=>	

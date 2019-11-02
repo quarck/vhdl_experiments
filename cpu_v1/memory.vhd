@@ -69,8 +69,17 @@ architecture rtl of memory is
 		OP_OUT_GROUP & R15, x"05",
 	
 		-- display a tiny dot on a VGA screen
+
+		-- clear the old pos 
 		
-		-- now - increment the position 
+		OP_SETXY, R11 & R12,
+		OP_LDC & R15, x"00",
+		OP_SETC, R15 & R15,
+		
+		OP_MOVE_RR, R11 & R6,
+		OP_MOVE_RR, R12 & R8,
+		
+		-- now - increment the position 				
 		OP_TEST_V, R10 & x"2", -- check the x direction 
 		OP_JMP_REL_Z, x"0a", -- negative_vx
 		
@@ -108,14 +117,11 @@ architecture rtl of memory is
 		OP_SETC, R4 & R5,
 
 		-- sleep loop 
-		 OP_IN_GROUP & R11, x"00", -- read DP sw
-		 OP_ADD, R11 & x"1",
+		 -- OP_IN_GROUP & R11, x"00", -- read DP sw
+		 --OP_ADD, R11 & x"1",
 
-		 OP_WAIT, x"02",
-		 OP_SUB, R11 & x"1",
-		 OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction
-
-	
+		OP_WAIT, x"04",
+		-- OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction
 
 		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  
 
