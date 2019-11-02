@@ -89,17 +89,20 @@ write_process:
 		variable x : integer range 0 to 127;
 		variable y : integer range 0 to 31;
 	begin
-		if rising_edge(clk_i) and write_enable_i = '1'
+		if rising_edge(clk_i)
 		then 
-			x := to_integer(unsigned(pos_x_i));
-			y := to_integer(unsigned(pos_y_i)); 
-			
-			if x <= 80 and y <= 30 
-			then 
-				offset := 64 * y + 16 * y + x;
-				char_memory(offset) <= chr_i;
-				color_memory(offset) <= clr_i;
-			end if;			
+			if write_enable_i = '1'
+			then
+				x := to_integer(unsigned(pos_x_i));
+				y := to_integer(unsigned(pos_y_i)); 
+				
+				if x <= 80 and y <= 30 
+				then 
+					offset := 64 * y + 16 * y + x;
+					char_memory(offset) <= chr_i;
+					color_memory(offset) <= clr_i;
+				end if;			
+			end if;
 		end if;		
 	end process;
 	

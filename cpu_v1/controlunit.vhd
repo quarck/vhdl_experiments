@@ -50,9 +50,6 @@ entity controlunit is
 		vga_write_enable_o		: out std_logic;
 
 		-- debug -- would be stripped out during synthesis 
-		dbg_lr_o				: out std_logic_vector(7 downto 0);
-		dbg_rr_o				: out std_logic_vector(7 downto 0);
-		dbg_rv_o				: out std_logic_vector(7 downto 0);	
 		dbg_state_o				: out cpu_state_type;
 		dbg_pc_o				: out std_logic_vector(7 downto 0);	
 		dbg_f_o					: out ALU_flags := (others => '0');
@@ -65,9 +62,6 @@ architecture behaviour of controlunit is
 	type regfile_type is array (0 to 15) of std_logic_vector(7 downto 0);
 	
 	signal regfile					: regfile_type := (others => (others => '0'));
-	signal left_reg_val				: std_logic_vector(7 downto 0);
-	signal right_reg_val			: std_logic_vector(7 downto 0);
-	signal right_impl_val			: std_logic_vector(7 downto 0);
 
 	signal cpu_state				: cpu_state_type;
 	signal program_counter			: std_logic_vector(7 downto 0);
@@ -82,9 +76,6 @@ architecture behaviour of controlunit is
 
 begin
 
-	dbg_lr_o	<= left_reg_val;
-	dbg_rr_o	<= right_reg_val;
-	dbg_rv_o	<= right_impl_val;
 	dbg_state_o <= cpu_state;
 	dbg_pc_o	<= program_counter;	
 	dbg_f_o		<= flags;
@@ -162,13 +153,8 @@ begin
 				when DECODE =>
 					instruction_data <= data_i;
 
-					left_reg_val <= regfile(conv_integer(data_i(7 downto 4)));
-					right_reg_val <= regfile(conv_integer(data_i(3 downto 0)));
-					right_impl_val <= "0000" & data_i(3 downto 0); 
-
 					case instruction_code(7 downto 4) is 
 						when OP_ST => 
-							left_reg_val	<= regfile(conv_integer(instruction_code(3 downto 0)));
 							cpu_state <= EXECUTE_ST_1;
 
 						when OP_LD => 
@@ -282,7 +268,7 @@ begin
 				
 				when EXECUTE_ST_1  =>  
 					address_o <= instruction_data;
-					data_o <= left_reg_val;
+					data_o <= regfile(conv_integer(instruction_code(3 downto 0)));
 					write_enable_o <= '1';
 					cpu_state <= FETCH_0;
 
@@ -301,12 +287,13 @@ begin
 					cpu_state <= FETCH_0;
 					
 				when EXECUTE_MOV_RR	 =>	 
-					regfile(conv_integer(instruction_data(7 downto 4))) <= right_reg_val;
+					regfile(conv_integer(instruction_data(7 downto 4))) <= 
+							regfile(conv_integer(instruction_data(3 downto 0)));
 					cpu_state <= FETCH_0;
 					
 
 				when EXECUTE_MOV_RA_1  =>  
-					address_o <= right_reg_val;
+					address_o <= regfile(conv_integer(instruction_data(3 downto 0)));
 					read_enable_o	<= '1';
 					cpu_state <= EXECUTE_MOV_RA_2;
 				when EXECUTE_MOV_RA_2  =>  
@@ -316,8 +303,8 @@ begin
 					cpu_state <= FETCH_0;
 
 				when EXECUTE_MOV_AR_1  =>  
-					address_o <= left_reg_val;					
-					data_o <= right_reg_val;
+					address_o <= regfile(conv_integer(instruction_data(7 downto 4)));					
+					data_o <= regfile(conv_integer(instruction_data(3 downto 0)));
 					write_enable_o <= '1';
 					cpu_state <= FETCH_0;	 -- go to FETCH_0 ?
 
@@ -330,7 +317,9 @@ begin
 					cpu_state <= FETCH_0;
 				
 				when EXECUTE_JMP_REG => 
-					program_counter <= left_reg_val + right_impl_val;
+					program_counter <= 
+							regfile(conv_integer(instruction_data(7 downto 4)))
+							+ ("0000" & instruction_data(3 downto 0));
 					cpu_state <= FETCH_0; 
 
 				when EXECUTE_PORT_IN_1	=> 
@@ -410,13 +399,13 @@ begin
 
 
 				when EXECUTE_SET_XY => 
-					vga_pos_x_o <= left_reg_val(6 downto 0);
-					vga_pos_y_o <= right_reg_val(4 downto 0);
+					vga_pos_x_o <= regfile(conv_integer(instruction_data(7 downto 4)))(6 downto 0);
+					vga_pos_y_o <= regfile(conv_integer(instruction_data(3 downto 0)))(4 downto 0);
 					cpu_state <= FETCH_0; 
 
 				when EXECUTE_SET_CHAR => 
-					vga_chr_o <= left_reg_val;
-					vga_clr_o <= right_reg_val;
+					vga_chr_o <= regfile(conv_integer(instruction_data(7 downto 4)));
+					vga_clr_o <= regfile(conv_integer(instruction_data(3 downto 0)));
 					vga_write_enable_o <= '1';		
 					cpu_state <= FETCH_0; 
 				

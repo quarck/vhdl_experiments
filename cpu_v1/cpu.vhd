@@ -83,9 +83,6 @@ architecture structural of cpu is
 			vga_write_enable_o		: out std_logic;
 
 			-- debug -- would be stripped out during synthesis 
-			dbg_lr_o				: out std_logic_vector(7 downto 0);
-			dbg_rr_o				: out std_logic_vector(7 downto 0);
-			dbg_rv_o				: out std_logic_vector(7 downto 0);	
 			dbg_state_o				: out cpu_state_type;
 			dbg_pc_o				: out std_logic_vector(7 downto 0);	
 			dbg_f_o					: out ALU_flags := (others => '0');
@@ -164,9 +161,6 @@ begin
 		vga_clr_o				=> vga_clr_o,
 		vga_write_enable_o		=> vga_write_enable_o, 
 		
-		dbg_lr_o				=> open,
-		dbg_rr_o				=> open,
-		dbg_rv_o				=> open,
 		dbg_state_o				=> open,
 		dbg_pc_o				=> open,
 		dbg_f_o					=> open,

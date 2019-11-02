@@ -108,7 +108,13 @@ architecture rtl of memory is
 		OP_SETC, R7 & R7,
 
 		-- sleep loop 
-		OP_WAIT, x"0F",
+		 OP_IN_GROUP & R11, x"00", -- read DP sw
+		 OP_AALU_RV & ALU_ADD, R11 & x"1",
+
+		 OP_WAIT, x"02",
+		 OP_AALU_RV & ALU_SUB, R11 & x"1",
+		 OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction
+
 	
 
 		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  

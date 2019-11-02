@@ -38,9 +38,10 @@ architecture behaviour of ALU is
 	signal async_result_l_o	: std_logic_vector(nbits-1 downto 0);
 	signal async_flags_o	: ALU_flags;
 							  
-	signal sync_result_h_o	: std_logic_vector(nbits-1 downto 0);
-	signal sync_result_l_o	: std_logic_vector(nbits-1 downto 0);
-	signal sync_flags_o		: ALU_flags;
+	signal sync_result_h_o	: std_logic_vector(nbits-1 downto 0) := (others => '0');
+	signal sync_result_l_o	: std_logic_vector(nbits-1 downto 0) := (others => '0');
+	signal sync_flags_o		: ALU_flags := (others => '0');
+
 
 	type sync_alu_state_type is (
 		IDLE,
@@ -75,6 +76,7 @@ begin
 	with sync_select_i select 
 		flags_o <= sync_flags_o when '1',
 					async_flags_o when others;
+
 
 	sync_ready_o <= '1' when sync_alu_state = IDLE else '0'; 
 	

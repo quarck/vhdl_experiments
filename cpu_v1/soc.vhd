@@ -188,7 +188,6 @@ architecture structural of soc is
 		);
 	end component;
 
-
 	signal reset			: std_logic;
 	signal error			: std_logic;
 
@@ -237,6 +236,7 @@ architecture structural of soc is
 	signal pio_write_enable : std_logic;
 	
 begin 
+
 	mem_read_enable <= '1' when read_enable = '1' and read_select = DS_MEMORY else '0';
 	mem_write_enable <= '1' when write_enable = '1' and write_select = DS_MEMORY else '0';
 	pio_read_enable <= '1' when read_enable = '1' and read_select = DS_PIO else '0';
@@ -245,7 +245,7 @@ begin
 	data_i <= mem_data_r when read_select = DS_MEMORY else pio_data_r;
 
 	c : cpu port map (
-		clk_i					=> clk,
+		clk_i						=> clk,
 		reset_i					=> reset,
 		error_o					=> error,
 
@@ -336,9 +336,7 @@ begin
 	in_port_1(0) <= not Switch_0;
 	
 	LED_7 <= Switch_5;
-	-- LED_6 <= not Switch_5;	 
-	-- LED_7 <= out_port_4(7);
-	LED_6 <= out_port_4(6);
+	LED_6 <= error;
 	LED_5 <= out_port_4(5);
 	LED_4 <= out_port_4(4);
 	LED_3 <= out_port_4(3);
