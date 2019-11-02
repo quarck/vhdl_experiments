@@ -120,7 +120,7 @@ architecture rtl of memory is
 		 -- OP_IN_GROUP & R11, x"00", -- read DP sw
 		 --OP_ADD, R11 & x"1",
 
-		OP_WAIT, x"04",
+		OP_WAIT, x"10",
 		-- OP_JMP_REL_NZ, x"FA", -- minus 6 - back to wait instruction
 
 		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  

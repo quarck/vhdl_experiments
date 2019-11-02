@@ -44,20 +44,20 @@ architecture behaviour of ALU is
 
 
 	type sync_alu_state_type is (
-		IDLE --,
+		IDLE,
 
-		-- ALU_MUL_COMPUTE_1,
-		-- ALU_MUL_COMPUTE_2,
+		 ALU_MUL_COMPUTE_1,
+		 ALU_MUL_COMPUTE_2,
 
-		-- ALU_DIV_COMPUTE_1,
-		-- ALU_DIV_COMPUTE_2,
-		-- ALU_DIV_COMPUTE_3,
-		-- ALU_DIV_COMPUTE_4,
+		 ALU_DIV_COMPUTE_1,
+		 ALU_DIV_COMPUTE_2,
+		 ALU_DIV_COMPUTE_3,
+		 ALU_DIV_COMPUTE_4,
 
-		-- ALU_MUL_FINISH, 
-		-- ALU_IMUL_FINISH
-		-- ALU_DIV_FINISH, 
-		-- ALU_IDIV_FINISH
+		 ALU_MUL_FINISH, 
+		 ALU_IMUL_FINISH,
+		 ALU_DIV_FINISH, 
+		 ALU_IDIV_FINISH
 	);
 	
 	signal sync_alu_state : sync_alu_state_type := IDLE;
@@ -76,14 +76,6 @@ begin
 	with sync_select_i select 
 		flags_o <= sync_flags_o when '1',
 					async_flags_o when others;
-
-
---	result_h_o <= (others => '0');
---
---	result_l_o <= async_result_l_o;
---
---	flags_o <= async_flags_o;
-
 
 	sync_ready_o <= '1' when sync_alu_state = IDLE else '0'; 
 	
@@ -193,244 +185,244 @@ begin
 	end process;
 	
 
---	-- sync ALU process 
---	process (clk_i, rst_i)
---		variable m_mask			: std_logic_vector(2*nbits-1 downto 0);
---		variable m_acc			: std_logic_vector(2*nbits-1 downto 0);
---		variable m_left			: std_logic_vector(2*nbits-1 downto 0);
---		variable m_right		: std_logic_vector(nbits-1 downto 0);
---		variable m_wright		: std_logic_vector(2*nbits-1 downto 0);
---		
---		variable im_l_sgn		: std_logic;
---		variable im_r_sgn		: std_logic;		
---	begin
---		
---		if rst_i = '1'
---		then
---			sync_result_h_o	<= (others => '0');
---			sync_result_l_o	<= (others => '0');
---			sync_flags_o		<= (others => '0');
---			sync_alu_state		<= IDLE;
---		elsif rising_edge(clk_i)
---		then 
---			case sync_alu_state is 
---				when IDLE =>
---					case operation_i is 
-----						when ALU_MUL =>	
-----							m_acc := all_zeroes & all_zeroes; 
-----							m_left := all_zeroes & left_l_i;
-----							m_right := right_l_i;
-----							sync_alu_state <= ALU_MUL_COMPUTE_1;
-----							
-----						when ALU_IMUL => 
-----							m_acc := all_zeroes & all_zeroes; 
-----							
-----							im_l_sgn := left_l_i(nbits-1);
-----							im_r_sgn := right_l_i(nbits-1);
-----							
-----							if im_l_sgn = '1' 	-- negative number 
-----							then 
-----								m_left := not (all_ones & left_l_i) + 1;
-----							else 
-----								m_left := all_zeroes & left_l_i;
-----							end if;
-----
-----							if im_r_sgn = '1' 	-- negative number 
-----							then 
-----								m_right := not right_l_i + 1;
-----							else 
-----								m_right := right_l_i;
-----							end if;
-----							sync_alu_state <= ALU_MUL_COMPUTE_1;
---							
----- 						when ALU_DIV =>	 
----- 							m_left := left_h_i & left_l_i;
----- 							m_wright := right_l_i & all_zeroes;
----- 							m_acc := all_zeroes & all_zeroes;
----- 							sync_alu_state <= ALU_DIV_COMPUTE_1;
----- 							
----- 						when ALU_IDIV => 
----- 							im_l_sgn := left_h_i(nbits-1);
----- 							im_r_sgn := right_l_i(nbits-1);
----- 
----- 							if im_l_sgn = '1'
----- 							then 
----- 								m_left := not (left_h_i & left_l_i) + 1;
----- 							else
----- 								m_left := left_h_i & left_l_i;
----- 							end if;
----- 							
----- 							if im_r_sgn = '1'
----- 							then
----- 								m_wright := (not right_l_i + 1) & all_zeroes;
----- 							else
----- 								m_wright := right_l_i & all_zeroes;
----- 							end if;
----- 							
----- 							m_acc := all_zeroes & all_zeroes;
----- 							sync_alu_state <= ALU_DIV_COMPUTE_1;
---							
---						when others	=> 
---								sync_alu_state <= IDLE;
---					end case;
---
-----				when ALU_MUL_COMPUTE_1 => 
-----					
-----					for i in 0 to nbits/2-1 
-----					loop 
-----						if m_right(i) /= '0' 
-----						then 
-----							m_mask := all_ones & all_ones;
-----						else 
-----							m_mask := all_zeroes & all_zeroes;
-----						end if;
-----
-----						m_acc := m_acc + (m_left and m_mask);
-----						m_left := m_left(2*nbits-2 downto 0) & '0';
-----					end loop;
-----					
-----					sync_alu_state <= ALU_MUL_COMPUTE_2;
-----
-----				when ALU_MUL_COMPUTE_2 => 
-----					
-----					for i in nbits/2 to nbits-1 
-----					loop 
-----						if m_right(i) /= '0' 
-----						then 
-----							m_mask := all_ones & all_ones;
-----						else 
-----							m_mask := all_zeroes & all_zeroes;
-----						end if;
-----
-----						m_acc := m_acc + (m_left and m_mask);
-----						m_left := m_left(2*nbits-2 downto 0) & '0';
-----					end loop;
-----					
-----					if im_l_sgn = '0' and im_r_sgn = '0' then 
-----						sync_alu_state <= ALU_MUL_FINISH;
-----					else 
-----						sync_alu_state <= ALU_IMUL_FINISH;
-----					end if;
-----				
-----				when ALU_MUL_FINISH => 
-----					sync_flags_o <= (others => '0');
-----					if m_acc = (all_zeroes & all_zeroes)
-----					then 
-----						sync_flags_o.zero <= '1';
-----					end if;
-----					if m_acc(2*nbits-1 downto nbits) /= all_zeroes
-----					then 
-----						sync_flags_o.overflow <= '1';
-----					end if;
-----
-----					sync_result_h_o <= m_acc(2*nbits-1 downto nbits);
-----					sync_result_l_o <= m_acc(nbits-1 downto 0);
-----					sync_alu_state <= IDLE;
-----					
-----				when ALU_IMUL_FINISH => 
-----					sync_flags_o <= (others => '0');
-----					if m_acc = (all_zeroes & all_zeroes)
-----					then 
-----						sync_flags_o.zero <= '1';
-----					end if;
-----					if m_acc(2*nbits-1 downto nbits) /= all_zeroes
-----					then 
-----						sync_flags_o.overflow <= '1';
-----					end if;
-----
-----					if (im_l_sgn xor im_r_sgn) = '1' 
-----					then 
-----						m_acc := not m_acc + 1;
-----					end if;
-----
-----					sync_result_h_o <= m_acc(2*nbits-1 downto nbits);
-----					sync_result_l_o <= m_acc(nbits-1 downto 0);
-----					sync_alu_state <= IDLE;
---
----- 				when ALU_DIV_COMPUTE_1 =>
----- 					for i in nbits-1 downto nbits*3/4
----- 					loop 
-----  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
----- 						if m_left >= m_wright 
----- 						then 
-----  							m_left := m_left - m_wright;
----- 							m_acc(i) := '1';
----- 						end if;
-----  					end loop;
----- 					sync_alu_state <= ALU_DIV_COMPUTE_2;
----- 					
----- 				when ALU_DIV_COMPUTE_2 =>
----- 					for i in nbits*3/4-1 downto nbits*2/4
----- 					loop 
-----  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
----- 						if m_left >= m_wright 
----- 						then 
-----  							m_left := m_left - m_wright;
----- 							m_acc(i) := '1';
----- 						end if;
-----  					end loop;
----- 					sync_alu_state <= ALU_DIV_COMPUTE_3;
----- 					
----- 				when ALU_DIV_COMPUTE_3 =>
----- 					for i in nbits*2/4-1 downto nbits*1/4
----- 					loop 
-----  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
----- 						if m_left >= m_wright 
----- 						then 
-----  							m_left := m_left - m_wright;
----- 							m_acc(i) := '1';
----- 						end if;
-----  					end loop;
----- 					sync_alu_state <= ALU_DIV_COMPUTE_4;
----- 					
----- 				when ALU_DIV_COMPUTE_4 =>
----- 					for i in nbits*1/4-1 downto 0
----- 					loop 
-----  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
----- 						if m_left >= m_wright 
----- 						then 
-----  							m_left := m_left - m_wright;
----- 							m_acc(i) := '1';
----- 						end if;
-----  					end loop;
----- 					
----- 					if im_l_sgn = '0' and im_r_sgn = '0' then 
----- 						sync_alu_state <= ALU_DIV_FINISH;
----- 					else 
----- 						sync_alu_state <= ALU_IDIV_FINISH;
----- 					end if;				
----- 				
----- 				when ALU_DIV_FINISH =>
----- 					sync_flags_o <= (others => '0');
----- 					if m_left > m_wright
----- 					then 
----- 						sync_flags_o.divide_by_zero <= '1';
----- 					end if;
----- 					
----- 					sync_result_l_o <= m_acc(nbits-1 downto 0);
----- 					sync_result_h_o <= m_left(nbits-1 downto 0);
----- 					sync_alu_state <= IDLE;
----- 				
----- 				when ALU_IDIV_FINISH =>
----- 					sync_flags_o <= (others => '0');
----- 					if m_left > m_wright
----- 					then 
----- 						sync_flags_o.divide_by_zero <= '1';
----- 					end if;
----- 					
----- 					if (im_l_sgn xor im_r_sgn) = '1' 
----- 					then 
----- 						sync_result_l_o <= not m_acc(nbits-1 downto 0) + 1;
----- 						sync_result_h_o <= not m_left(nbits-1 downto 0) + 1; -- note - this is probably incorrect!
----- 					else
----- 						sync_result_l_o <= m_acc(nbits-1 downto 0);
----- 						sync_result_h_o <= m_left(nbits-1 downto 0);
----- 					end if;
----- 					sync_alu_state <= IDLE;
---
---			end case;
---		end if;
---	
---	end process;
+	-- sync ALU process 
+	process (clk_i, rst_i)
+		variable m_mask			: std_logic_vector(2*nbits-1 downto 0);
+		variable m_acc			: std_logic_vector(2*nbits-1 downto 0);
+		variable m_left			: std_logic_vector(2*nbits-1 downto 0);
+		variable m_right		: std_logic_vector(nbits-1 downto 0);
+		variable m_wright		: std_logic_vector(2*nbits-1 downto 0);
+		
+		variable im_l_sgn		: std_logic;
+		variable im_r_sgn		: std_logic;		
+	begin
+		
+		if rst_i = '1'
+		then
+			sync_result_h_o	<= (others => '0');
+			sync_result_l_o	<= (others => '0');
+			sync_flags_o		<= (others => '0');
+			sync_alu_state		<= IDLE;
+		elsif rising_edge(clk_i)
+		then 
+			case sync_alu_state is 
+				when IDLE =>
+					case operation_i is 
+						when ALU_MUL =>	
+							m_acc := all_zeroes & all_zeroes; 
+							m_left := all_zeroes & left_l_i;
+							m_right := right_l_i;
+							sync_alu_state <= ALU_MUL_COMPUTE_1;
+							
+						when ALU_IMUL => 
+							m_acc := all_zeroes & all_zeroes; 
+							
+							im_l_sgn := left_l_i(nbits-1);
+							im_r_sgn := right_l_i(nbits-1);
+							
+							if im_l_sgn = '1' 	-- negative number 
+							then 
+								m_left := not (all_ones & left_l_i) + 1;
+							else 
+								m_left := all_zeroes & left_l_i;
+							end if;
+
+							if im_r_sgn = '1' 	-- negative number 
+							then 
+								m_right := not right_l_i + 1;
+							else 
+								m_right := right_l_i;
+							end if;
+							sync_alu_state <= ALU_MUL_COMPUTE_1;
+							
+ 						when ALU_DIV =>	 
+ 							m_left := left_h_i & left_l_i;
+ 							m_wright := right_l_i & all_zeroes;
+ 							m_acc := all_zeroes & all_zeroes;
+ 							sync_alu_state <= ALU_DIV_COMPUTE_1;
+ 							
+ 						when ALU_IDIV => 
+ 							im_l_sgn := left_h_i(nbits-1);
+ 							im_r_sgn := right_l_i(nbits-1);
+ 
+ 							if im_l_sgn = '1'
+ 							then 
+ 								m_left := not (left_h_i & left_l_i) + 1;
+ 							else
+ 								m_left := left_h_i & left_l_i;
+ 							end if;
+ 							
+ 							if im_r_sgn = '1'
+ 							then
+ 								m_wright := (not right_l_i + 1) & all_zeroes;
+ 							else
+ 								m_wright := right_l_i & all_zeroes;
+ 							end if;
+ 							
+ 							m_acc := all_zeroes & all_zeroes;
+ 							sync_alu_state <= ALU_DIV_COMPUTE_1;
+							
+						when others	=> 
+								sync_alu_state <= IDLE;
+					end case;
+
+				when ALU_MUL_COMPUTE_1 => 
+					
+					for i in 0 to nbits/2-1 
+					loop 
+						if m_right(i) /= '0' 
+						then 
+							m_mask := all_ones & all_ones;
+						else 
+							m_mask := all_zeroes & all_zeroes;
+						end if;
+
+						m_acc := m_acc + (m_left and m_mask);
+						m_left := m_left(2*nbits-2 downto 0) & '0';
+					end loop;
+					
+					sync_alu_state <= ALU_MUL_COMPUTE_2;
+
+				when ALU_MUL_COMPUTE_2 => 
+					
+					for i in nbits/2 to nbits-1 
+					loop 
+						if m_right(i) /= '0' 
+						then 
+							m_mask := all_ones & all_ones;
+						else 
+							m_mask := all_zeroes & all_zeroes;
+						end if;
+
+						m_acc := m_acc + (m_left and m_mask);
+						m_left := m_left(2*nbits-2 downto 0) & '0';
+					end loop;
+					
+					if im_l_sgn = '0' and im_r_sgn = '0' then 
+						sync_alu_state <= ALU_MUL_FINISH;
+					else 
+						sync_alu_state <= ALU_IMUL_FINISH;
+					end if;
+				
+				when ALU_MUL_FINISH => 
+					sync_flags_o <= (others => '0');
+					if m_acc = (all_zeroes & all_zeroes)
+					then 
+						sync_flags_o.zero <= '1';
+					end if;
+					if m_acc(2*nbits-1 downto nbits) /= all_zeroes
+					then 
+						sync_flags_o.overflow <= '1';
+					end if;
+
+					sync_result_h_o <= m_acc(2*nbits-1 downto nbits);
+					sync_result_l_o <= m_acc(nbits-1 downto 0);
+					sync_alu_state <= IDLE;
+					
+				when ALU_IMUL_FINISH => 
+					sync_flags_o <= (others => '0');
+					if m_acc = (all_zeroes & all_zeroes)
+					then 
+						sync_flags_o.zero <= '1';
+					end if;
+					if m_acc(2*nbits-1 downto nbits) /= all_zeroes
+					then 
+						sync_flags_o.overflow <= '1';
+					end if;
+
+					if (im_l_sgn xor im_r_sgn) = '1' 
+					then 
+						m_acc := not m_acc + 1;
+					end if;
+
+					sync_result_h_o <= m_acc(2*nbits-1 downto nbits);
+					sync_result_l_o <= m_acc(nbits-1 downto 0);
+					sync_alu_state <= IDLE;
+
+ 				when ALU_DIV_COMPUTE_1 =>
+ 					for i in nbits-1 downto nbits*3/4
+ 					loop 
+  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
+ 						if m_left >= m_wright 
+ 						then 
+  							m_left := m_left - m_wright;
+ 							m_acc(i) := '1';
+ 						end if;
+  					end loop;
+ 					sync_alu_state <= ALU_DIV_COMPUTE_2;
+ 					
+ 				when ALU_DIV_COMPUTE_2 =>
+ 					for i in nbits*3/4-1 downto nbits*2/4
+ 					loop 
+  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
+ 						if m_left >= m_wright 
+ 						then 
+  							m_left := m_left - m_wright;
+ 							m_acc(i) := '1';
+ 						end if;
+  					end loop;
+ 					sync_alu_state <= ALU_DIV_COMPUTE_3;
+ 					
+ 				when ALU_DIV_COMPUTE_3 =>
+ 					for i in nbits*2/4-1 downto nbits*1/4
+ 					loop 
+  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
+ 						if m_left >= m_wright 
+ 						then 
+  							m_left := m_left - m_wright;
+ 							m_acc(i) := '1';
+ 						end if;
+  					end loop;
+ 					sync_alu_state <= ALU_DIV_COMPUTE_4;
+ 					
+ 				when ALU_DIV_COMPUTE_4 =>
+ 					for i in nbits*1/4-1 downto 0
+ 					loop 
+  						m_wright := '0' & m_wright(2*nbits-1 downto 1);
+ 						if m_left >= m_wright 
+ 						then 
+  							m_left := m_left - m_wright;
+ 							m_acc(i) := '1';
+ 						end if;
+  					end loop;
+ 					
+ 					if im_l_sgn = '0' and im_r_sgn = '0' then 
+ 						sync_alu_state <= ALU_DIV_FINISH;
+ 					else 
+ 						sync_alu_state <= ALU_IDIV_FINISH;
+ 					end if;				
+ 				
+ 				when ALU_DIV_FINISH =>
+ 					sync_flags_o <= (others => '0');
+ 					if m_left > m_wright
+ 					then 
+ 						sync_flags_o.divide_by_zero <= '1';
+ 					end if;
+ 					
+ 					sync_result_l_o <= m_acc(nbits-1 downto 0);
+ 					sync_result_h_o <= m_left(nbits-1 downto 0);
+ 					sync_alu_state <= IDLE;
+ 				
+ 				when ALU_IDIV_FINISH =>
+ 					sync_flags_o <= (others => '0');
+ 					if m_left > m_wright
+ 					then 
+ 						sync_flags_o.divide_by_zero <= '1';
+ 					end if;
+ 					
+ 					if (im_l_sgn xor im_r_sgn) = '1' 
+ 					then 
+ 						sync_result_l_o <= not m_acc(nbits-1 downto 0) + 1;
+ 						sync_result_h_o <= not m_left(nbits-1 downto 0) + 1; -- note - this is probably incorrect!
+ 					else
+ 						sync_result_l_o <= m_acc(nbits-1 downto 0);
+ 						sync_result_h_o <= m_left(nbits-1 downto 0);
+ 					end if;
+ 					sync_alu_state <= IDLE;
+
+			end case;
+		end if;
+	
+	end process;
 
 end behaviour;
