@@ -10,7 +10,7 @@ entity memory is
 	);
 	port
 	(
-		clk_i				: in std_logic;
+		clk_i			: in std_logic;
 		address_i		: in std_logic_vector(7 downto 0);
 		data_i			: in std_logic_vector(7 downto 0);
 		data_o			: out std_logic_vector(7 downto 0);
@@ -144,6 +144,7 @@ begin
 			-- then
 			-- 	data_o <= mem(to_integer(unsigned(address_i)));
 			end if;
+
 			data_o <= mem(to_integer(unsigned(address_i)));
 		end if;
 	end process;

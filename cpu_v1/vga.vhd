@@ -46,9 +46,6 @@ architecture behavioral of vga is
 	attribute ram_style of char_memory : signal is "block";
 	attribute ram_style of color_memory : signal is "block";
 
-	-- Intermediate register used internally
-	signal rgb			 : std_logic_vector(7 downto 0) := x"f0";
-
 	-- Set the resolution of screen
 	signal pixel_x		 : integer range 0 to 1023 := 640;
 	signal pixel_y		 : integer range 0 to 1023 := 480;
@@ -86,8 +83,8 @@ begin
 write_process: 
 	process (clk_i)
 		variable offset : integer range 0 to 80 * 40;
-		variable x : integer range 0 to 127;
-		variable y : integer range 0 to 31;
+		variable x 	: integer range 0 to 127;
+		variable y 	: integer range 0 to 31;
 	begin
 		if rising_edge(clk_i)
 		then 
@@ -110,7 +107,7 @@ generate_signal:
 	process (clk_i)
 		variable divide_by_4 : std_logic_vector(1 downto 0) := "00";
 		variable vram_line_base : integer range 0 to 40 * 80 := 0;
-
+		variable rgb : std_logic_vector(7 downto 0) := x"f0";
 	begin				
 		if rising_edge(clk_i) 
 		then
@@ -148,32 +145,18 @@ generate_signal:
 				
 				when "10" => 
 					-- skil clock as we wait for data from ROM
+					pixel_x <= next_pixel_x;
+					pixel_y <= next_pixel_y;
 				
 				when others => 
 				
 					if chr_x < 80 and chr_y < 30 and chrg_line(gen_x) = '1' 
 					then 
-						rgb <= clr;
+						rgb := clr;
 					else 
-						rgb <= x"00";
+						rgb := x"00";
 					end if;
 					
-					-- Maximum Horizontal count is limited to 799 for 640 x 480 display so that it fit's the screen.						
-					if pixel_x = 799
-					then
-						pixel_x <= 0;
-						-- Maximum Vertical count is limited to 524 for	 640 x 480 display so that it fit's the screen.						
-						if pixel_y = 524
-						then
-							pixel_y <= 0;
-						else
-							pixel_y <= pixel_y + 1;
-						end if;
-					else
-						pixel_x <= pixel_x + 1;
-					end if;
-
-
 					if pixel_y >= 490 and pixel_y < 492 
 					then 
 						vsync_o <= '0';
@@ -188,16 +171,9 @@ generate_signal:
 						hsync_o <= '1';
 					end if;
 
-					if pixel_x < 640 and pixel_y < 480 
-					then 
-						red_o <= rgb (7 downto 5);
-						green_o <= rgb (4 downto 2);
-						blue_o <= rgb (1 downto 0);
-					else
-						red_o <= "000";
-						green_o <= "000";
-						blue_o <= "00";
-					end if;			
+					red_o <= rgb (7 downto 5);
+					green_o <= rgb (4 downto 2);
+					blue_o <= rgb (1 downto 0);
 			end case;
 					
 			divide_by_4 := divide_by_4 + 1;
