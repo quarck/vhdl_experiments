@@ -140,10 +140,11 @@ begin
 			then 
 				mem(to_integer(unsigned(address_i))) <= data_i;
 				data_o <= data_i;			
-			elsif mem_read_i = '1' 
-			then
-				data_o <= mem(to_integer(unsigned(address_i)));
+			-- elsif mem_read_i = '1' 
+			-- then
+			-- 	data_o <= mem(to_integer(unsigned(address_i)));
 			end if;
+			data_o <= mem(to_integer(unsigned(address_i)));
 		end if;
 	end process;
 end rtl;

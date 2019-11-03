@@ -19,6 +19,7 @@ ARCHITECTURE behavior OF TB_sync_alu IS
 			clk_i				: in std_logic;
 			rst_i				: in std_logic; 
 			operation_i			: in std_logic_vector(4 downto 0);
+			sync_select_i		: in std_logic; -- latched MSB of operation_i
 			left_h_i			: in std_logic_vector(nbits-1 downto 0);
 			left_l_i			: in std_logic_vector(nbits-1 downto 0);
 			right_l_i			: in std_logic_vector(nbits-1 downto 0);
@@ -33,7 +34,7 @@ ARCHITECTURE behavior OF TB_sync_alu IS
    -- Clock period definitions
 	constant clk_period : time := 10 ns; 
 
-    signal clk						: std_logic;
+   signal clk						: std_logic;
 	signal rst						: std_logic;
 	signal operation				: std_logic_vector(4 downto 0);
 	signal left_arg_high			: std_logic_vector(7 downto 0);
@@ -51,6 +52,7 @@ begin
 		clk_i				=> clk,
 	    rst_i				=> rst,
 	    operation_i			=> operation,
+		 sync_select_i		=> '1',
 	    left_h_i			=> left_arg_high,
 	    left_l_i			=> left_arg_low,
 	    right_l_i			=> right_arg,
@@ -83,19 +85,19 @@ tb:
 		right_arg <= x"23";
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: 1B 9E
+		wait for clk_period*20;  -- expected result: 1B 9E
 
 		operation <= ALU_IMUL;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10; -- expected result: F8 9E
+		wait for clk_period*20; -- expected result: F8 9E
 
 		left_arg_low <= x"23";
 		right_arg <= x"CA";
 		operation <= ALU_IMUL;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10; -- expected result: F8 9E
+		wait for clk_period*20; -- expected result: F8 9E
 
 
 		left_arg_low <= x"FF";
@@ -103,7 +105,7 @@ tb:
 		operation <= ALU_IMUL;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10; -- expected result: 00 01 
+		wait for clk_period*20; -- expected result: 00 01 
 
 
 		left_arg_high <= x"00";
@@ -112,7 +114,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: 55 on low, 0 on high
+		wait for clk_period*20;  -- expected result: 55 on low, 0 on high
 
 		left_arg_high <= x"00";
 		left_arg_low <= x"FE";
@@ -120,7 +122,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: 54 on low, 2 on high
+		wait for clk_period*20;  -- expected result: 54 on low, 2 on high
 
 		left_arg_high <= x"00";
 		left_arg_low <= x"FE";
@@ -128,7 +130,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: D on low, 7 on high
+		wait for clk_period*20;  -- expected result: D on low, 7 on high
 
 
 		left_arg_high <= x"04";
@@ -137,7 +139,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: 43 on low, 5 on high
+		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
 
 		left_arg_high <= x"FF";
 		left_arg_low <= x"FE";
@@ -145,7 +147,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: divide by zero error
+		wait for clk_period*20;  -- expected result: divide by zero error
 
 		left_arg_high <= x"04";
 		left_arg_low <= x"FE";
@@ -153,7 +155,7 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: 43 on low, 5 on high
+		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
 
 		left_arg_high <= x"00";
 		left_arg_low <= x"01";
@@ -161,9 +163,9 @@ tb:
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
-		wait for clk_period*10;  -- expected result: divide by zero error
+		wait for clk_period*20;  -- expected result: divide by zero error
 
 
-		wait; -- will wait forever
+		wait for clk_period * 100; -- will wait forever
     end process tb;
 end;
