@@ -1,0 +1,197 @@
+library ieee ;
+use ieee.std_logic_1164.all;
+use ieee.std_logic_unsigned.all ;
+
+use work.opcodes.all;
+use work.types.all;
+
+entity soc_vga_only is 
+end soc_vga_only;
+
+
+
+-- entity soc_vga_only is 
+--     port (
+--         clk : in std_logic; 
+--         
+--         DPSwitch_0 : in std_logic; -- pull up by default 
+--         DPSwitch_1 : in std_logic; -- pull up by default 
+--         DPSwitch_2 : in std_logic; -- pull up by default 
+--         DPSwitch_3 : in std_logic; -- pull up by default 
+--         DPSwitch_4 : in std_logic; -- pull up by default 
+--         DPSwitch_5 : in std_logic; -- pull up by default 
+--         DPSwitch_6 : in std_logic; -- pull up by default 
+--         DPSwitch_7 : in std_logic; -- pull up by default 
+--         Switch_5 : in std_logic; -- pull up by default
+--         Switch_4 : in std_logic; -- pull up by default
+--         Switch_3 : in std_logic; -- pull up by default
+--         Switch_2 : in std_logic; -- pull up by default
+--         Switch_1 : in std_logic; -- pull up by default
+--         Switch_0 : in std_logic; -- pull up by default
+-- 
+--         LED_7 : out std_logic;
+--         LED_6 : out std_logic;
+--         LED_5 : out std_logic;
+--         LED_4 : out std_logic;
+--         LED_3 : out std_logic;
+--         LED_2 : out std_logic;
+--         LED_1 : out std_logic;
+--         LED_0 : out std_logic;
+-- 
+--         SevenSegment_7  : out std_logic;    -- a
+--         SevenSegment_6  : out std_logic;    -- b
+--         SevenSegment_5  : out std_logic;    -- c
+--         SevenSegment_4  : out std_logic;    -- d
+--         SevenSegment_3  : out std_logic;    -- e
+--         SevenSegment_2  : out std_logic;    -- f
+--         SevenSegment_1  : out std_logic;    -- g
+--         SevenSegment_0  : out std_logic;    -- dot   
+--         SevenSegmentEnable_2 : out std_logic;
+--         SevenSegmentEnable_1 : out std_logic;
+--         SevenSegmentEnable_0 : out std_logic;
+-- 
+--         IO_P6_7 : in std_logic;  --  #Pin 1
+--         IO_P6_6 : in std_logic;  --  #Pin 2
+--         IO_P6_5 : in std_logic;  --  #Pin 3
+--         IO_P6_4 : in std_logic;  --  #Pin 4
+--         IO_P6_3 : in std_logic;  --  #Pin 5
+--         IO_P6_2 : in std_logic;  --  #Pin 6
+--         IO_P6_1 : in std_logic;  --  #Pin 7
+--         IO_P6_0 : in std_logic;  --  #Pin 8
+--         IO_P7_7 : in std_logic;  --  #Pin 1
+--         IO_P7_6 : in std_logic;  --  #Pin 2
+--         IO_P7_5 : in std_logic;  --  #Pin 3
+--         IO_P7_4 : in std_logic;  --  #Pin 4
+--         IO_P7_3 : in std_logic;  --  #Pin 5
+--         IO_P7_2 : in std_logic;  --  #Pin 6
+--         IO_P7_1 : in std_logic;  --  #Pin 7
+--         IO_P7_0 : in std_logic;  --  #Pin 8
+-- 
+--         IO_P8_7 : out std_logic;  --  #Pin 1
+--         IO_P8_6 : out std_logic;  --  #Pin 2
+--         IO_P8_5 : out std_logic;  --  #Pin 3
+--         IO_P8_4 : out std_logic;  --  #Pin 4
+--         IO_P8_3 : out std_logic;  --  #Pin 5
+--         IO_P8_2 : out std_logic;  --  #Pin 6
+--         IO_P8_1 : out std_logic;  --  #Pin 7
+--         IO_P8_0 : out std_logic;  --  #Pin 8
+--         IO_P9_7 : out std_logic;  --  #Pin 1
+--         IO_P9_6 : out std_logic;  --  #Pin 2
+--         IO_P9_5 : out std_logic;  --  #Pin 3
+--         IO_P9_4 : out std_logic;  --  #Pin 4
+--         IO_P9_3 : out std_logic;  --  #Pin 5
+--         IO_P9_2 : out std_logic;  --  #Pin 6
+--         IO_P9_1 : out std_logic;  --  #Pin 7
+--         IO_P9_0 : out std_logic;  --  #Pin 8
+-- 
+--         HSync   : out std_logic;
+--         VSync   : out std_logic;
+--         Red_2   : out std_logic;
+--         Red_1   : out std_logic;
+--         Red_0   : out std_logic;
+--         Green_2 : out std_logic;
+--         Green_1 : out std_logic;
+--         Green_0 : out std_logic;
+--         Blue_2  : out std_logic;
+--         Blue_1  : out std_logic
+--         );
+-- end soc_vga_only;
+-- 
+-- architecture structural of soc_vga_only is 
+-- 
+--     component vga is
+--         port(
+--             clk_i       : in std_logic;
+-- 			
+-- 			pos_x_i			: in std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
+-- 			pos_y_i			: in std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
+-- 			chr_i			: in std_logic_vector(7 downto 0); 
+-- 			clr_i			: in std_logic_vector(7 downto 0); 
+-- 			write_enable_i	: in std_logic;
+-- 
+--             hsync_o       : out std_logic;
+--             vsync_o       : out std_logic;
+-- 
+--             red_o         : out std_logic_vector(2 downto 0);
+--             green_o       : out std_logic_vector(2 downto 0);
+--             blue_o        : out std_logic_vector(2 downto 1)
+--         );
+--     end component;
+-- 
+-- 
+--     signal red         : std_logic_vector(2 downto 0);
+--     signal green       : std_logic_vector(2 downto 0);
+--     signal blue        : std_logic_vector(2 downto 1);
+--     
+-- 	signal write_cnt 	: std_logic_vector(18 downto 0) := (others => '0');
+-- 	
+-- begin 
+-- 
+--     v: vga port map (
+--         clk_i       => clk,
+-- 		pos_x_i			=> (others => '0'),
+-- 		pos_y_i			=> (others => '0'),
+-- 		chr_i			=> (others => '0'),
+-- 		clr_i			=> (others => '0'),
+-- 		write_enable_i	=> '0',
+-- 		
+--         hsync_o     => HSync,
+--         vsync_o     => VSync,
+--         red_o       => red,
+--         green_o     => green,
+--         blue_o      => blue
+--     );
+-- 
+-- 	write_cnt <= write_cnt + 1;
+--         
+-- 	LED_7 <= Switch_5;
+-- 	LED_6 <= not Switch_5;
+--     LED_5 <= Switch_5;
+--     LED_4 <= not Switch_5;
+--     LED_3 <= Switch_5;
+--     LED_2 <= not Switch_5;
+--     LED_1 <= Switch_5;
+--     LED_0 <= not Switch_5;
+-- 
+--     Red_2  <= red(2);
+--     Red_1  <= red(1);
+--     Red_0  <= red(0);
+--     Green_2<= green(2);
+--     Green_1<= green(1);
+--     Green_0<= green(0);
+--     Blue_2 <= blue(2);
+--     Blue_1 <= blue(1);
+-- 
+-- 
+-- 	SevenSegment_7  <= DPSwitch_7;
+-- 	SevenSegment_6  <= DPSwitch_6;
+-- 	SevenSegment_5  <= DPSwitch_5;
+-- 	SevenSegment_4  <= DPSwitch_4;
+-- 	SevenSegment_3  <= DPSwitch_3;
+-- 	SevenSegment_2  <= DPSwitch_2;
+-- 	SevenSegment_1  <= DPSwitch_1;
+-- 	SevenSegment_0  <= DPSwitch_0;
+-- 	SevenSegmentEnable_2 <= '0';
+-- 	SevenSegmentEnable_1 <= '0';
+-- 	SevenSegmentEnable_0 <= '0';
+-- 
+-- 	IO_P8_7 <= '0';
+-- 	IO_P8_6 <= '0';
+-- 	IO_P8_5 <= '0';
+-- 	IO_P8_4 <= '0';
+-- 	IO_P8_3 <= '0';
+-- 	IO_P8_2 <= '0';
+-- 	IO_P8_1 <= '0';
+-- 	IO_P8_0 <= '0';
+-- 	IO_P9_7 <= '0';
+-- 	IO_P9_6 <= '0';
+-- 	IO_P9_5 <= '0';
+-- 	IO_P9_4 <= '0';
+-- 	IO_P9_3 <= '0';
+-- 	IO_P9_2 <= '0';
+-- 	IO_P9_1 <= '0';
+-- 	IO_P9_0 <= '0';
+-- 
+-- 
+-- end structural;
+-- 
