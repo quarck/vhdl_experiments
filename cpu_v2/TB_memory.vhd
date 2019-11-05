@@ -42,9 +42,9 @@ ARCHITECTURE behavior OF TB_memory IS
     COMPONENT memory
     PORT(
          clk : IN  std_logic;
-         address_bus : IN  std_logic_vector(7 downto 0);
-         data_write : IN  std_logic_vector(7 downto 0);
-         data_read : OUT  std_logic_vector(7 downto 0);
+         address_bus : IN  std_logic_vector(15 downto 0);
+         data_write : IN  std_logic_vector(15 downto 0);
+         data_read : OUT  std_logic_vector(15 downto 0);
          mem_write : IN  std_logic;
          rst : IN  std_logic
         );
@@ -53,8 +53,8 @@ ARCHITECTURE behavior OF TB_memory IS
 
    --Inputs
    signal clk : std_logic := '0';
-   signal address_bus : std_logic_vector(7 downto 0) := (others => '0');
-   signal data_write : std_logic_vector(7 downto 0) := (others => '0');
+   signal address_bus : std_logic_vector(15 downto 0) := (others => '0');
+   signal data_write : std_logic_vector(15 downto 0) := (others => '0');
    signal mem_write : std_logic := '0';
    signal rst : std_logic := '0';
 
@@ -105,13 +105,13 @@ BEGIN
 
       -- insert stimulus here 
 		
-		address_bus <= "00000000";
+		address_bus <= x"0000";
 		wait for clk_period;
 
-		address_bus <= "00000001";
+		address_bus <= x"0001";
 		wait for clk_period;
 
-		address_bus <= "00000010";
+		address_bus <= x"0002";
 		wait for clk_period;
 
 		data_write <= "11111111";

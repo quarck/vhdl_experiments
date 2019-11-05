@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity regfile is
     generic (
         nreg    : integer := 4; -- 2**nreg is the number of registers generated 
-        bits    : integer := 8
+        bits    : integer := 16
     );
     port ( 
 		  -- reads are async, writes are on rising_edge 
@@ -30,7 +30,7 @@ architecture rtl of regfile is
 
 	component reg is
 		generic (
-			nbits	: integer := 8
+			nbits	: integer := 16
 		);
 		port (
 			clk_i		: in std_logic;

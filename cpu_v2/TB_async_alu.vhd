@@ -12,13 +12,14 @@ ARCHITECTURE behavior OF TB_async_alu IS
 
 	component ALU is
 		generic (
-			nbits	: integer := 8
+			nbits	: integer := 16
 		);
 		port
 		(
 			clk_i				: in std_logic;
 			rst_i				: in std_logic; 
 			operation_i			: in std_logic_vector(4 downto 0);
+			sync_select_i		: in std_logic; -- latched MSB of operation_i
 			left_h_i			: in std_logic_vector(nbits-1 downto 0);
 			left_l_i			: in std_logic_vector(nbits-1 downto 0);
 			right_l_i			: in std_logic_vector(nbits-1 downto 0);
@@ -37,11 +38,11 @@ ARCHITECTURE behavior OF TB_async_alu IS
    signal clk						: std_logic;
 	signal rst						: std_logic;
 	signal operation				: std_logic_vector(4 downto 0);
-	signal left_arg_high			: std_logic_vector(7 downto 0);
-	signal left_arg_low				: std_logic_vector(7 downto 0);
-	signal right_arg				: std_logic_vector(7 downto 0);
-	signal result_high				: std_logic_vector(7 downto 0);
-	signal result_low				: std_logic_vector(7 downto 0);
+	signal left_arg_high			: std_logic_vector(15 downto 0);
+	signal left_arg_low				: std_logic_vector(15 downto 0);
+	signal right_arg				: std_logic_vector(15 downto 0);
+	signal result_high				: std_logic_vector(15 downto 0);
+	signal result_low				: std_logic_vector(15 downto 0);
 	signal flags					: ALU_flags;
 	signal carry_in				: std_logic;
 	signal alu_ready				: std_logic;
@@ -53,6 +54,7 @@ begin
 		clk_i				=> clk,
 	    rst_i				=> rst,
 	    operation_i			=> operation,
+		 sync_select_i			=> '0',
 	    left_h_i			=> left_arg_high,
 	    left_l_i			=> left_arg_low,
 	    right_l_i			=> right_arg,
@@ -76,8 +78,8 @@ tb:
     process
     begin
         operation <= ALU_ADD;
-        left_arg_low <= x"33";
-        right_arg <= x"55";
+        left_arg_low <= x"0033";
+        right_arg <= x"0055";
         carry_in <= '0';
         
         wait for 10 ns; 

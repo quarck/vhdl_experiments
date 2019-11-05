@@ -102,11 +102,11 @@ architecture structural of soc is
 			error_o					: out std_logic;
 			
 			-- address bus - multiplexed between memory and PIO 
-			address_o				: out std_logic_vector(7 downto 0);
+			address_o				: out std_logic_vector(15 downto 0);
 			
 			-- data buses - multiplexed between port and memory 
-			data_i					: in std_logic_vector(7 downto 0);
-			data_o					: out std_logic_vector(7 downto 0);
+			data_i					: in std_logic_vector(15 downto 0);
+			data_o					: out std_logic_vector(15 downto 0);
 
 			-- read/write controls for both memory and PIO
 			read_enable_o			: out std_logic;
@@ -130,14 +130,14 @@ architecture structural of soc is
 	
 	component memory is
 		generic (
-			mem_size : integer := 256
+			mem_size : integer := 65535
 		);
 		port
 		(
-			clk_i				: in std_logic;
-			address_i		: in std_logic_vector(7 downto 0);
-			data_i			: in std_logic_vector(7 downto 0);
-			data_o			: out std_logic_vector(7 downto 0);
+			clk_i			: in std_logic;
+			address_i		: in std_logic_vector(15 downto 0);
+			data_i			: in std_logic_vector(15 downto 0);
+			data_o			: out std_logic_vector(15 downto 0);
 			mem_read_i		: in std_logic;
 			mem_write_i		: in std_logic
 		);
@@ -148,9 +148,9 @@ architecture structural of soc is
 			clk_i			: in std_logic;
 			rst_i			: in std_logic;
 			
-			port_address_i	: in std_logic_vector(7 downto 0);
-			data_i			: in std_logic_vector(7 downto 0); -- data entering IO port 
-			data_o			: out std_logic_vector(7 downto 0);
+			port_address_i	: in std_logic_vector(15 downto 0);
+			data_i			: in std_logic_vector(15 downto 0); -- data entering IO port 
+			data_o			: out std_logic_vector(15 downto 0);
 			write_enable_i	: in std_logic;
 			read_enable_i	: in std_logic;
 			io_ready_o		: out std_logic;
@@ -192,13 +192,13 @@ architecture structural of soc is
 	signal error			: std_logic;
 
 	-- address bus - multiplexed between memory and PIO 
-	signal address				: std_logic_vector(7 downto 0);
+	signal address				: std_logic_vector(15 downto 0);
 	
 	-- data buses - multiplexed between port and memory 
-	signal data_i				: std_logic_vector(7 downto 0);
-	signal data_o				: std_logic_vector(7 downto 0);
-	signal mem_data_r			: std_logic_vector(7 downto 0);
-	signal pio_data_r			: std_logic_vector(7 downto 0);
+	signal data_i				: std_logic_vector(15 downto 0);
+	signal data_o				: std_logic_vector(15 downto 0);
+	signal mem_data_r			: std_logic_vector(15 downto 0);
+	signal pio_data_r			: std_logic_vector(15 downto 0);
 
 	-- read/write controls for both memory and PIO
 	signal read_enable			: std_logic;

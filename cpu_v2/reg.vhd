@@ -3,7 +3,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 
 entity reg is
 	generic (
-		nbits	: integer := 8
+		nbits	: integer := 16
 	);
 	port (
 		clk_i		: in std_logic;

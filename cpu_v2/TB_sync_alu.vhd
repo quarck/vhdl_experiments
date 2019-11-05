@@ -12,7 +12,7 @@ ARCHITECTURE behavior OF TB_sync_alu IS
 
 	component ALU is
 		generic (
-			nbits	: integer := 8
+			nbits	: integer := 16
 		);
 		port
 		(
@@ -37,11 +37,11 @@ ARCHITECTURE behavior OF TB_sync_alu IS
    signal clk						: std_logic;
 	signal rst						: std_logic;
 	signal operation				: std_logic_vector(4 downto 0);
-	signal left_arg_high			: std_logic_vector(7 downto 0);
-	signal left_arg_low				: std_logic_vector(7 downto 0);
-	signal right_arg				: std_logic_vector(7 downto 0);
-	signal result_high				: std_logic_vector(7 downto 0);
-	signal result_low				: std_logic_vector(7 downto 0);
+	signal left_arg_high			: std_logic_vector(15 downto 0);
+	signal left_arg_low				: std_logic_vector(15 downto 0);
+	signal right_arg				: std_logic_vector(15 downto 0);
+	signal result_high				: std_logic_vector(15 downto 0);
+	signal result_low				: std_logic_vector(15 downto 0);
 	signal flags					: ALU_flags;
 	signal alu_ready				: std_logic;
 
@@ -80,9 +80,9 @@ tb:
 		rst <= '0';
 	
 		operation <= ALU_MUL;
-		left_arg_high <= x"00";
-		left_arg_low <= x"CA";
-		right_arg <= x"23";
+		left_arg_high <= x"0000";
+		left_arg_low <= x"00CA";
+		right_arg <= x"0023";
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: 1B 9E
@@ -92,74 +92,74 @@ tb:
 		operation <= ALU_NOP;
 		wait for clk_period*20; -- expected result: F8 9E
 
-		left_arg_low <= x"23";
-		right_arg <= x"CA";
+		left_arg_low <= x"0023";
+		right_arg <= x"00CA";
 		operation <= ALU_IMUL;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20; -- expected result: F8 9E
 
 
-		left_arg_low <= x"FF";
-		right_arg <= x"FF";
+		left_arg_low <= x"00FF";
+		right_arg <= x"00FF";
 		operation <= ALU_IMUL;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20; -- expected result: 00 01 
 
 
-		left_arg_high <= x"00";
-		left_arg_low <= x"FF";
-		right_arg <= x"03";
+		left_arg_high <= x"0000";
+		left_arg_low <= x"00FF";
+		right_arg <= x"0003";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: 55 on low, 0 on high
 
-		left_arg_high <= x"00";
-		left_arg_low <= x"FE";
-		right_arg <= x"03";
+		left_arg_high <= x"0000";
+		left_arg_low <= x"00FE";
+		right_arg <= x"0003";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: 54 on low, 2 on high
 
-		left_arg_high <= x"00";
-		left_arg_low <= x"FE";
-		right_arg <= x"13";
+		left_arg_high <= x"0000";
+		left_arg_low <= x"00FE";
+		right_arg <= x"0013";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: D on low, 7 on high
 
 
-		left_arg_high <= x"04";
-		left_arg_low <= x"FE";
-		right_arg <= x"13";
+		left_arg_high <= x"0004";
+		left_arg_low <= x"00FE";
+		right_arg <= x"0013";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
 
-		left_arg_high <= x"FF";
-		left_arg_low <= x"FE";
-		right_arg <= x"13";
+		left_arg_high <= x"00FF";
+		left_arg_low <= x"00FE";
+		right_arg <= x"0013";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: divide by zero error
 
-		left_arg_high <= x"04";
-		left_arg_low <= x"FE";
-		right_arg <= x"13";
+		left_arg_high <= x"0004";
+		left_arg_low <= x"00FE";
+		right_arg <= x"0013";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;
 		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
 
-		left_arg_high <= x"00";
-		left_arg_low <= x"01";
-		right_arg <= x"00";
+		left_arg_high <= x"0000";
+		left_arg_low <= x"0001";
+		right_arg <= x"0000";
 		operation <= ALU_DIV;
 		wait for clk_period;
 		operation <= ALU_NOP;

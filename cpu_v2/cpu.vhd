@@ -11,11 +11,11 @@ entity cpu is
 		error_o					: out std_logic;
 		
 		-- address bus - multiplexed between memory and PIO 
-		address_o				: out std_logic_vector(7 downto 0);
+		address_o				: out std_logic_vector(15 downto 0);
 		
 		-- data buses - multiplexed between port and memory 
-		data_i					: in std_logic_vector(7 downto 0);
-		data_o					: out std_logic_vector(7 downto 0);
+		data_i					: in std_logic_vector(15 downto 0);
+		data_o					: out std_logic_vector(15 downto 0);
 
 		-- read/write controls for both memory and PIO
 		read_enable_o			: out std_logic;
@@ -63,12 +63,12 @@ architecture structural of cpu is
 
 			alu_operation_o			: out std_logic_vector(4 downto 0);
 			alu_sync_select_o		: out std_logic; -- latched MSB of operation_i
-			alu_left_h_o			: out std_logic_vector(7 downto 0);
-			alu_left_l_o			: out std_logic_vector(7 downto 0);
-			alu_right_l_o			: out std_logic_vector(7 downto 0);
+			alu_left_h_o			: out std_logic_vector(15 downto 0);
+			alu_left_l_o			: out std_logic_vector(15 downto 0);
+			alu_right_l_o			: out std_logic_vector(15 downto 0);
 			alu_carry_o				: out std_logic;
-			alu_result_h_i			: in std_logic_vector(7 downto 0);
-			alu_result_l_i			: in std_logic_vector(7 downto 0);
+			alu_result_h_i			: in std_logic_vector(15 downto 0);
+			alu_result_l_i			: in std_logic_vector(15 downto 0);
 			alu_flags_i				: in ALU_flags;
 			alu_sync_ready_i		: in std_logic;
 			
@@ -84,15 +84,15 @@ architecture structural of cpu is
 
 			-- debug -- would be stripped out during synthesis 
 			dbg_state_o				: out cpu_state_type;
-			dbg_pc_o				: out std_logic_vector(7 downto 0);	
+			dbg_pc_o				: out std_logic_vector(15 downto 0);	
 			dbg_f_o					: out ALU_flags := (others => '0');
-			dbg_ir_o				: out std_logic_vector(7 downto 0)		  
+			dbg_ir_o				: out std_logic_vector(15 downto 0)		  
 		);
 	end component;	
 	
 	component ALU is
 		generic (
-			nbits	: integer := 8
+			nbits	: integer := 16
 		);
 		port
 		(
@@ -113,12 +113,12 @@ architecture structural of cpu is
 
 	signal alu_operation		: std_logic_vector(4 downto 0);
 	signal alu_sync_select	: std_logic;
-	signal alu_left_h			: std_logic_vector(7 downto 0);
-	signal alu_left_l			: std_logic_vector(7 downto 0);
-	signal alu_right_l			: std_logic_vector(7 downto 0);
+	signal alu_left_h			: std_logic_vector(15 downto 0);
+	signal alu_left_l			: std_logic_vector(15 downto 0);
+	signal alu_right_l			: std_logic_vector(15 downto 0);
 	signal alu_carry			: std_logic;
-	signal alu_result_h			: std_logic_vector(7 downto 0);
-	signal alu_result_l			: std_logic_vector(7 downto 0);
+	signal alu_result_h			: std_logic_vector(15 downto 0);
+	signal alu_result_l			: std_logic_vector(15 downto 0);
 	signal alu_flags			: ALU_flags;
 	signal alu_sync_ready		: std_logic;
 

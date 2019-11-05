@@ -8,7 +8,7 @@ use work.types.all;
 
 entity ALU is
 	generic (
-		nbits	: integer := 8
+		nbits	: integer := 16
 	);
 	port
 	(

@@ -6,9 +6,9 @@ entity pio is
 		clk_i			: in std_logic;
 		rst_i			: in std_logic;
 		
-		port_address_i	: in std_logic_vector(7 downto 0);
-		data_i			: in std_logic_vector(7 downto 0); -- data entering IO port 
-		data_o			: out std_logic_vector(7 downto 0);
+		port_address_i	: in std_logic_vector(15 downto 0);
+		data_i			: in std_logic_vector(15 downto 0); -- data entering IO port 
+		data_o			: out std_logic_vector(15 downto 0);
 		write_enable_i	: in std_logic;
 		read_enable_i	: in std_logic;
 		io_ready_o		: out std_logic;
@@ -75,23 +75,23 @@ begin
 			 case state is 
 				 when IO_IDLE =>  
 					 if write_enable_i = '1' then 
-						 case port_address_i is 
-							 when "00000100" => gpio_4_o <= data_i;
-							 when "00000101" => sw_led_mask <= data_i;
-							 when "00000110" => sw_seg_select <= data_i;
-							 when "00000111" => gpio_7_o <= data_i;
-							 when "00001000" => gpio_8_o <= data_i;
+						 case port_address_i(7 downto 0) is 
+							 when "00000100" => gpio_4_o <= data_i(7 downto 0);
+							 when "00000101" => sw_led_mask <= data_i(7 downto 0);
+							 when "00000110" => sw_seg_select <= data_i(7 downto 0);
+							 when "00000111" => gpio_7_o <= data_i(7 downto 0);
+							 when "00001000" => gpio_8_o <= data_i(7 downto 0);
 							 when others	 => 
 						 end case;
 						 state <= IO_BUSY;
 						 
 					 elsif read_enable_i = '1' then 
-						 case port_address_i is 
-							 when "00000000" => data_o <= gpio_0_i;
-							 when "00000001" => data_o <= gpio_1_i;
-							 when "00000010" => data_o <= gpio_2_i;
-							 when "00000011" => data_o <= gpio_3_i;
-							 when others	 => data_o <= "00000000";
+						 case port_address_i(7 downto 0) is 
+							 when "00000000" => data_o <= "00000000" & gpio_0_i;
+							 when "00000001" => data_o <= "00000000" & gpio_1_i;
+							 when "00000010" => data_o <= "00000000" & gpio_2_i;
+							 when "00000011" => data_o <= "00000000" & gpio_3_i;
+							 when others	 => data_o <= "0000000000000000";
 						 end case;
 						 
 						 state <= IO_BUSY;

@@ -20,11 +20,11 @@ architecture behavior of TB_controlunit is
 			error_o					: out std_logic;
 			
 			-- address bus - multiplexed between memory and PIO 
-			address_o				: out std_logic_vector(7 downto 0);
+			address_o				: out std_logic_vector(15 downto 0);
 			
 			-- data buses - multiplexed between port and memory 
-			data_i					: in std_logic_vector(7 downto 0);
-			data_o					: out std_logic_vector(7 downto 0);
+			data_i					: in std_logic_vector(15 downto 0);
+			data_o					: out std_logic_vector(15 downto 0);
 
 			-- read/write controls for both memory and PIO
 			read_enable_o			: out std_logic;
@@ -36,12 +36,12 @@ architecture behavior of TB_controlunit is
 
 			alu_operation_o			: out std_logic_vector(4 downto 0);
 			alu_sync_select_o		: out std_logic; -- latched MSB of operation_i
-			alu_left_h_o			: out std_logic_vector(7 downto 0);
-			alu_left_l_o			: out std_logic_vector(7 downto 0);
-			alu_right_l_o			: out std_logic_vector(7 downto 0);
+			alu_left_h_o			: out std_logic_vector(15 downto 0);
+			alu_left_l_o			: out std_logic_vector(15 downto 0);
+			alu_right_l_o			: out std_logic_vector(15 downto 0);
 			alu_carry_o				: out std_logic;
-			alu_result_h_i			: in std_logic_vector(7 downto 0);
-			alu_result_l_i			: in std_logic_vector(7 downto 0);
+			alu_result_h_i			: in std_logic_vector(15 downto 0);
+			alu_result_l_i			: in std_logic_vector(15 downto 0);
 			alu_flags_i				: in ALU_flags;
 			alu_sync_ready_i		: in std_logic;
 			
@@ -56,19 +56,16 @@ architecture behavior of TB_controlunit is
 			vga_write_enable_o		: out std_logic;
 
 			-- debug -- would be stripped out during synthesis 
-			dbg_lr_o				: out std_logic_vector(7 downto 0);
-			dbg_rr_o				: out std_logic_vector(7 downto 0);
-			dbg_rv_o				: out std_logic_vector(7 downto 0);	
 			dbg_state_o				: out cpu_state_type;
-			dbg_pc_o				: out std_logic_vector(7 downto 0);	
+			dbg_pc_o				: out std_logic_vector(15 downto 0);	
 			dbg_f_o					: out ALU_flags := (others => '0');
-			dbg_ir_o				: out std_logic_vector(7 downto 0)		  
+			dbg_ir_o				: out std_logic_vector(15 downto 0)		  
 		);
 	end component;
 	
 	component ALU is
 		generic (
-			nbits	: integer := 8
+			nbits	: integer := 16
 		);
 		port
 		(
@@ -92,9 +89,9 @@ architecture behavior of TB_controlunit is
 			  clk_i			  : in std_logic;
 			  rst_i			  : in std_logic;
 			  
-			  port_address_i  : in std_logic_vector(7 downto 0);
-			  data_i		  : in std_logic_vector(7 downto 0); -- data entering IO port 
-			  data_o		  : out std_logic_vector(7 downto 0);
+			  port_address_i  : in std_logic_vector(15 downto 0);
+			  data_i		  : in std_logic_vector(15 downto 0); -- data entering IO port 
+			  data_o		  : out std_logic_vector(15 downto 0);
 			  write_enable_i  : in std_logic;
 			  read_enable_i	  : in std_logic;
 			  io_ready_o	  : out std_logic;
@@ -120,13 +117,13 @@ architecture behavior of TB_controlunit is
 	signal reset_i					: std_logic;
 	signal error_o					: std_logic;
 
-	signal cu_address				: std_logic_vector(7 downto 0);
+	signal cu_address				: std_logic_vector(15 downto 0);
 
-	signal cu_data_i				: std_logic_vector(7 downto 0);
-	signal cu_data_o				: std_logic_vector(7 downto 0);
+	signal cu_data_i				: std_logic_vector(15 downto 0);
+	signal cu_data_o				: std_logic_vector(15 downto 0);
 	
-	signal pio_cu_data_i		: std_logic_vector(7 downto 0);
-	signal mem_cu_data_i		: std_logic_vector(7 downto 0);
+	signal pio_cu_data_i		: std_logic_vector(15 downto 0);
+	signal mem_cu_data_i		: std_logic_vector(15 downto 0);
 
 	signal cu_read_enable			: std_logic;
 	signal cu_read_select			: data_select;
@@ -136,12 +133,12 @@ architecture behavior of TB_controlunit is
 
 	signal alu_operation		: std_logic_vector(4 downto 0);
 	signal alu_sync_select		: std_logic; -- latched MSB of operation_i
-	signal alu_left_h			: std_logic_vector(7 downto 0);
-	signal alu_left_l			: std_logic_vector(7 downto 0);
-	signal alu_right_l			: std_logic_vector(7 downto 0);
+	signal alu_left_h			: std_logic_vector(15 downto 0);
+	signal alu_left_l			: std_logic_vector(15 downto 0);
+	signal alu_right_l			: std_logic_vector(15 downto 0);
 	signal alu_carry			: std_logic;
-	signal alu_result_h			: std_logic_vector(7 downto 0);
-	signal alu_result_l			: std_logic_vector(7 downto 0);
+	signal alu_result_h			: std_logic_vector(15 downto 0);
+	signal alu_result_l			: std_logic_vector(15 downto 0);
 	signal alu_flags_in			: ALU_flags;
 	signal alu_sync_ready		: std_logic;
 
@@ -163,106 +160,106 @@ architecture behavior of TB_controlunit is
 	signal vga_clr				: std_logic_vector(7 downto 0); 
 	signal vga_write_enable		: std_logic;
 		
-	signal dbg_lr				: std_logic_vector(7 downto 0);
-	signal dbg_rr				: std_logic_vector(7 downto 0);
-	signal dbg_rv				: std_logic_vector(7 downto 0);	
+	signal dbg_lr				: std_logic_vector(15 downto 0);
+	signal dbg_rr				: std_logic_vector(15 downto 0);
+	signal dbg_rv				: std_logic_vector(15 downto 0);	
 	signal dbg_state			: cpu_state_type;
-	signal dbg_pc				: std_logic_vector(7 downto 0);	
+	signal dbg_pc				: std_logic_vector(15 downto 0);	
 	signal dbg_f				: ALU_flags := (others => '0');
-	signal dbg_ir				: std_logic_vector(7 downto 0);
+	signal dbg_ir				: std_logic_vector(15 downto 0);
 
 
-   type mem_type is array (0 to 255) of std_logic_vector(7 downto 0);
+   type mem_type is array (0 to 65535) of std_logic_vector(15 downto 0);
    signal mem: mem_type := (
 	
-		OP_LDC & R0, x"01", -- A0 
-		OP_LDC & R1, x"00", -- A1
+		OP_LDC & R0 & x"01", -- A0 
+		OP_LDC & R1 & x"00", -- A1
 		
-		OP_LDC & R2, x"01", -- B0
-		OP_LDC & R3, x"00", -- B1
+		OP_LDC & R2 & x"01", -- B0
+		OP_LDC & R3 & x"00", -- B1
 		
-		OP_LDC & R4, x"00", -- C0
-		OP_LDC & R5, x"00", -- C1
+		OP_LDC & R4 & x"00", -- C0
+		OP_LDC & R5 & x"00", -- C1
 
-		OP_LDC & R6, x"01", -- current X pos
-		OP_LDC & R7, x"4f", -- max X pos 
-		OP_LDC & R8, x"01", -- current Y pos
-		OP_LDC & R9, x"1D", -- max Y pos
-		OP_LDC & R10, x"03", -- current direction, XY, by two LSB bits 
+		OP_LDC & R6 & x"01", -- current X pos
+		OP_LDC & R7 & x"4f", -- max X pos 
+		OP_LDC & R8 & x"01", -- current Y pos
+		OP_LDC & R9 & x"1D", -- max Y pos
+		OP_LDC & R10& x"03", -- current direction, XY, by two LSB bits 
 
 --0x16: loop: 
-		OP_MOVE_RR, R4 & R0,  -- C0 = A0
-		OP_ADD, R4 & R2, -- C0 = A0 + B0
-		OP_MOVE_RR, R5 & R1,  -- C1 = A1
-		OP_ADDC, R5 & R3, -- C1 = A1 + B1 + carry
+		OP_MOVE_RR & R4 & R0,  -- C0 = A0
+		OP_ADD & R4 & R2, -- C0 = A0 + B0
+		OP_MOVE_RR & R5 & R1,  -- C1 = A1
+		OP_ADDC & R5 & R3, -- C1 = A1 + B1 + carry
 
-		OP_MOVE_RR, R0 & R2, 
-		OP_MOVE_RR, R1 & R3,	 
-		OP_MOVE_RR, R2 & R4, 
-		OP_MOVE_RR, R3 & R5, 
+		OP_MOVE_RR & R0 & R2, 
+		OP_MOVE_RR & R1 & R3,	 
+		OP_MOVE_RR & R2 & R4, 
+		OP_MOVE_RR & R3 & R5, 
 
 		-- now - display the thing	
-		OP_LDC & R15, x"00",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
-		OP_SEVENSEGTRANSLATE, R15 & x"0",
-		OP_OUT_GROUP & R15, x"05",
-		OP_LDC & R15, x"01",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
-		OP_SEVENSEGTRANSLATE, R15 & x"4",
-		OP_OUT_GROUP & R15, x"05",
-		OP_LDC & R15, x"02",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R5,
-		OP_SEVENSEGTRANSLATE, R15 & x"0",
-		OP_OUT_GROUP & R15, x"05",
+		OP_LDC & R15 & x"00",
+		OP_OUT_GROUP & R15 & x"06",
+		OP_MOVE_RR & R15 & R4,
+		OP_SEVENSEGTRANSLATE & R15 & x"0",
+		OP_OUT_GROUP & R15 & x"05",
+		OP_LDC & R15 & x"01",
+		OP_OUT_GROUP & R15 & x"06",
+		OP_MOVE_RR & R15 & R4,
+		OP_SEVENSEGTRANSLATE & R15 & x"4",
+		OP_OUT_GROUP & R15 & x"05",
+		OP_LDC & R15 & x"02",
+		OP_OUT_GROUP & R15 & x"06",
+		OP_MOVE_RR & R15 & R5,
+		OP_SEVENSEGTRANSLATE & R15 & x"0",
+		OP_OUT_GROUP & R15 & x"05",
 	
 		-- display a tiny dot on a VGA screen
 		
 		-- now - increment the position 
-		OP_TEST_V, R10 & x"2", -- check the x direction 
-		OP_JMP_REL_Z, x"0a", -- negative_vx
+		OP_TEST_V & R10 & x"2", -- check the x direction 
+		OP_JMP_REL_Z & x"0a", -- negative_vx
 		
-		OP_ADD_V, R6 & x"1",
-		OP_CMP, R6 & R7, 
-		OP_JMP_REL_NZ, x"02", -- non-eq 
-		OP_XOR_V, R10 & x"2", -- invert x direction		
-		OP_JMP_REL_UNCOND, x"06",	-- do_y
+		OP_ADD_V & R6 & x"1",
+		OP_CMP & R6 & R7, 
+		OP_JMP_REL_NZ & x"02", -- non-eq 
+		OP_XOR_V & R10 & x"2", -- invert x direction		
+		OP_JMP_REL_UNCOND & x"06",	-- do_y
 
 -- negative_vx:
 
-		OP_SUB_V, R6 & x"1",
-		OP_JMP_REL_NZ, x"02", 
-		OP_XOR_V, R10 & x"2", -- invert x direction
+		OP_SUB_V & R6 & x"1",
+		OP_JMP_REL_NZ & x"02", 
+		OP_XOR_V & R10 & x"2", -- invert x direction
 -- do_y:
 
-		OP_TEST_V, R10 & x"1", -- check the x direction 
-		OP_JMP_REL_Z, x"0a", -- negative_vy
+		OP_TEST_V & R10 & x"1", -- check the x direction 
+		OP_JMP_REL_Z & x"0a", -- negative_vy
 		
-		OP_ADD_V, R8 & x"1",
-		OP_CMP, R8 & R9, 
-		OP_JMP_REL_NZ, x"02", -- non-eq 
-		OP_XOR_V, R10 & x"1", -- invert x direction		
-		OP_JMP_REL_UNCOND, x"06",	-- do_display
+		OP_ADD_V & R8 & x"1",
+		OP_CMP & R8 & R9, 
+		OP_JMP_REL_NZ & x"02", -- non-eq 
+		OP_XOR_V & R10 & x"1", -- invert x direction		
+		OP_JMP_REL_UNCOND & x"06",	-- do_display
 
 -- negative_vy:
-		OP_SUB_V, R8 & x"1",
-		OP_JMP_REL_NZ, x"02", 
-		OP_XOR_V, R10 & x"1", -- invert x direction
+		OP_SUB_V & R8 & x"1",
+		OP_JMP_REL_NZ & x"02", 
+		OP_XOR_V & R10 & x"1", -- invert x direction
 
 -- do_display: 
 
 		-- finally - dispay the new dot
-		OP_SETXY, R6 & R8,
-		OP_SETC, R4 & R5,
+		OP_SETXY & R6 & R8,
+		OP_SETC & R4 & R5,
 
 		-- sleep loop 
-		OP_WAIT, x"01",
+		OP_WAIT & x"01",
 	
-		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  
+		OP_JMP_A_UNCOND & x"16",		-- go loop in all other cases	  
 
-		others => x"00"
+		others => x"0000"
 	);
 
 	signal pio_read_enable : std_logic;
@@ -305,9 +302,6 @@ begin
 		vga_clr_o				=> vga_clr,
 		vga_write_enable_o		=> vga_write_enable,
 
-		dbg_lr_o				=> dbg_lr,
-		dbg_rr_o				=> dbg_rr,
-		dbg_rv_o				=> dbg_rv,
 		dbg_state_o				=> dbg_state,
 		dbg_pc_o				=> dbg_pc,
 		dbg_f_o					=> dbg_f,
