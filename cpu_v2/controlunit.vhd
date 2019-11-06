@@ -124,12 +124,11 @@ begin
 					cpu_state <= STOP;
 
 				when FETCH_0 =>
-				
-					alu_operation_o	<= (others => '0');
-					alu_left_h_o	<= (others => '0');
-					alu_left_l_o	<= (others => '0');
-					alu_right_l_o	<= (others => '0');
-					alu_carry_o		<= '0';
+					-- alu_operation_o	<= (others => '0');
+					-- alu_left_h_o	<= (others => '0');
+					-- alu_left_l_o	<= (others => '0');
+					-- alu_right_l_o	<= (others => '0');
+					-- alu_carry_o		<= '0';
 					
 					-- set instruction address on the memory bus
 					address_o <= program_counter;
@@ -367,12 +366,12 @@ begin
 				when STORE	=>	
 					regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
 					flags <= alu_flags_i;
-					alu_operation_o <= ALU_NOP;
+					-- alu_operation_o <= ALU_NOP;
 										
 					cpu_state <= FETCH_0;
 
 				when EXECUTE_7SEG_1 => 
-					alu_operation_o <= ALU_NOP;
+					-- alu_operation_o <= ALU_NOP;
 
 					case alu_result_l_i(3 downto 0) is 
 						when "0000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111100";

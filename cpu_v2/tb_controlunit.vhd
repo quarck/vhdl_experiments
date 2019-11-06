@@ -160,9 +160,6 @@ architecture behavior of TB_controlunit is
 	signal vga_clr				: std_logic_vector(7 downto 0); 
 	signal vga_write_enable		: std_logic;
 		
-	signal dbg_lr				: std_logic_vector(15 downto 0);
-	signal dbg_rr				: std_logic_vector(15 downto 0);
-	signal dbg_rv				: std_logic_vector(15 downto 0);	
 	signal dbg_state			: cpu_state_type;
 	signal dbg_pc				: std_logic_vector(15 downto 0);	
 	signal dbg_f				: ALU_flags := (others => '0');
@@ -173,19 +170,33 @@ architecture behavior of TB_controlunit is
    signal mem: mem_type := (
 	
 		OP_LDC & R0 & x"01", -- A0 
-		OP_LDC & R1 & x"00", -- A1
+--		OP_LDC & R1 & x"00", -- A1
 		
 		OP_LDC & R2 & x"01", -- B0
-		OP_LDC & R3 & x"00", -- B1
+--		OP_LDC & R3 & x"00", -- B1
 		
 		OP_LDC & R4 & x"00", -- C0
-		OP_LDC & R5 & x"00", -- C1
+--		OP_LDC & R5 & x"00", -- C1
 
-		OP_LDC & R6 & x"01", -- current X pos
-		OP_LDC & R7 & x"4f", -- max X pos 
-		OP_LDC & R8 & x"01", -- current Y pos
-		OP_LDC & R9 & x"1D", -- max Y pos
-		OP_LDC & R10& x"03", -- current direction, XY, by two LSB bits 
+--0x06: loop: 
+		OP_MOVE_RR & R4 & R0,  -- C0 = A0
+		OP_ADD & R4 & R2, -- C0 = A0 + B0
+	--	OP_MOVE_RR & R5 & R1,  -- C1 = A1
+	--	OP_ADDC & R5 & R3, -- C1 = A1 + B1 + carry
+
+		OP_MOVE_RR & R0 & R2, 
+		-- OP_MOVE_RR & R1 & R3,	 
+		OP_MOVE_RR & R2 & R4, 
+		-- OP_MOVE_RR & R3 & R5, 
+		
+		OP_JMP_A_UNCOND & x"03",
+
+
+ 		OP_LDC & R6 & x"01", -- current X pos
+ 		OP_LDC & R7 & x"4f", -- max X pos 
+ 		OP_LDC & R8 & x"01", -- current Y pos
+ 		OP_LDC & R9 & x"1D", -- max Y pos
+ 		OP_LDC & R10& x"03", -- current direction, XY, by two LSB bits 
 
 --0x16: loop: 
 		OP_MOVE_RR & R4 & R0,  -- C0 = A0
