@@ -47,11 +47,11 @@ architecture structural of cpu is
 			error_o					: out std_logic;
 			
 			-- address bus - multiplexed between memory and PIO 
-			address_o				: out std_logic_vector(7 downto 0);
+			address_o				: out std_logic_vector(15 downto 0);
 			
 			-- data buses - multiplexed between port and memory 
-			data_i					: in std_logic_vector(7 downto 0);
-			data_o					: out std_logic_vector(7 downto 0);
+			data_i					: in std_logic_vector(15 downto 0);
+			data_o					: out std_logic_vector(15 downto 0);
 
 			-- read/write controls for both memory and PIO
 			read_enable_o			: out std_logic;

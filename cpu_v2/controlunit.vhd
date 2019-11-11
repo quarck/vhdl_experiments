@@ -71,7 +71,7 @@ architecture behaviour of controlunit is
 	
 	-- signal clk_counter			   : std_logic_vector(31 downto 0) := (others => '0');
 
-	signal wait_counter				: std_logic_vector(24 downto 0) := (others => '0');
+	signal wait_counter				: std_logic_vector(23 downto 0) := (others => '0');
 
 begin
 
@@ -166,7 +166,7 @@ begin
 							alu_sync_select_o <= '0';
 							alu_carry_o <= flags.carry_out;
 							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
-							alu_right_l_o <= "0000" & data_i(3 downto 0);
+							alu_right_l_o <= "000000000000" & data_i(3 downto 0);
 							cpu_state <= STORE;
 
 						when OP_SALU_RR =>
@@ -232,7 +232,7 @@ begin
 									alu_sync_select_o <= '0';
 									alu_carry_o <= '0';									
 									alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
-									alu_right_l_o <= "0000" & data_i(3 downto 0);
+									alu_right_l_o <= "000000000000" & data_i(3 downto 0);
 									cpu_state <= EXECUTE_7SEG_1;
 									
 									
@@ -407,7 +407,7 @@ begin
 					cpu_state <= FETCH_0; 
 				
 				when EXECUTE_WAIT_1 => 
-					wait_counter(24 downto 8) <= not data_i;
+					wait_counter(23 downto 8) <= not data_i;
 					wait_counter(7 downto 0) <= (others => '1');
 					cpu_state <= EXECUTE_WAIT_2;
 				

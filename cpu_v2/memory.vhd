@@ -6,7 +6,7 @@ use work.opcodes.all;
 
 entity memory is
 	generic (
-		mem_size : integer := 65535
+		mem_size : integer := 16*1024
 	);
 	port
 	(
@@ -21,7 +21,7 @@ end memory;
 
 architecture rtl of memory is
 
-	type mem_type is array (0 to mem_size-1) of std_logic_vector(7 downto 0);
+	type mem_type is array (0 to mem_size-1) of std_logic_vector(15 downto 0);
 
 	signal mem: mem_type:= (
 		--0: start:
@@ -131,18 +131,24 @@ architecture rtl of memory is
 	attribute ram_style: string;
 	attribute ram_style of mem : signal is "block";
 
+
+	signal addr_cut : std_logic_vector(13 downto 0);
+	
 begin
+
+	addr_cut <= address_i(13 downto 0);
+
 	process (clk_i)
 	begin
 		if rising_edge(clk_i)
 		then
 			if mem_write_i = '1' 
 			then 
-				mem(to_integer(unsigned(address_i))) <= data_i;
+				mem(to_integer(unsigned(addr_cut))) <= data_i;
 				data_o <= data_i;
 			end if;
 
-			data_o <= mem(to_integer(unsigned(address_i)));
+			data_o <= mem(to_integer(unsigned(addr_cut)));
 		end if;
 	end process;
 end rtl;
