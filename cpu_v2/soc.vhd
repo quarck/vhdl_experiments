@@ -7,88 +7,41 @@ use work.types.all;
 
 entity soc is 
 	port (
-		clk : in std_logic; 
+		sys_clk				: in std_logic; 
 
-		DPSwitch_0 : in std_logic; -- pull up by default 
-		DPSwitch_1 : in std_logic; -- pull up by default 
-		DPSwitch_2 : in std_logic; -- pull up by default 
-		DPSwitch_3 : in std_logic; -- pull up by default 
-		DPSwitch_4 : in std_logic; -- pull up by default 
-		DPSwitch_5 : in std_logic; -- pull up by default 
-		DPSwitch_6 : in std_logic; -- pull up by default 
-		DPSwitch_7 : in std_logic; -- pull up by default 
-		Switch_5 : in std_logic; -- pull up by default
-		Switch_4 : in std_logic; -- pull up by default
-		Switch_3 : in std_logic; -- pull up by default
-		Switch_2 : in std_logic; -- pull up by default
-		Switch_1 : in std_logic; -- pull up by default
-		Switch_0 : in std_logic; -- pull up by default
+		mcb3_dram_dq        : inout  std_logic_vector(15 downto 0);
+		mcb3_dram_a         : out std_logic_vector(12 downto 0);
+		mcb3_dram_ba		: out std_logic_vector(1 downto 0);
+		mcb3_dram_cke       : out std_logic;
+		mcb3_dram_ras_n     : out std_logic;
+		mcb3_dram_cas_n     : out std_logic;
+		mcb3_dram_we_n      : out std_logic;
+		mcb3_dram_dm        : out std_logic;
+		mcb3_dram_udqs      : inout  std_logic;
+		mcb3_rzq            : inout  std_logic;
+		mcb3_dram_udm       : out std_logic;
+		mcb3_dram_dqs       : inout  std_logic;
+--		mcb3_dram_ck        : out std_logic;
+--		mcb3_dram_ck_n      : out std_logic;
 
-		LED_7 : out std_logic;
-		LED_6 : out std_logic;
-		LED_5 : out std_logic;
-		LED_4 : out std_logic;
-		LED_3 : out std_logic;
-		LED_2 : out std_logic;
-		LED_1 : out std_logic;
-		LED_0 : out std_logic;
+		
+		DPSwitch 			: in std_logic_vector(7 downto 0); -- pull up by default 		
+		Switch 				: in std_logic_vector(5 downto 0); -- pull up by default
 
-		SevenSegment_7	: out std_logic;	-- a
-		SevenSegment_6	: out std_logic;	-- b
-		SevenSegment_5	: out std_logic;	-- c
-		SevenSegment_4	: out std_logic;	-- d
-		SevenSegment_3	: out std_logic;	-- e
-		SevenSegment_2	: out std_logic;	-- f
-		SevenSegment_1	: out std_logic;	-- g
-		SevenSegment_0	: out std_logic;	-- dot	 
-		SevenSegmentEnable_2 : out std_logic;
-		SevenSegmentEnable_1 : out std_logic;
-		SevenSegmentEnable_0 : out std_logic;
+		LED 				: out std_logic_vector(7 downto 0);
+		SevenSegment		: out std_logic_vector(7 downto 0);	-- a to g and dot 
+		SevenSegmentEnable 	: out std_logic_vector(2 downto 0);
 
-		IO_P6_7 : in std_logic;	 --	 #Pin 1
-		IO_P6_6 : in std_logic;	 --	 #Pin 2
-		IO_P6_5 : in std_logic;	 --	 #Pin 3
-		IO_P6_4 : in std_logic;	 --	 #Pin 4
-		IO_P6_3 : in std_logic;	 --	 #Pin 5
-		IO_P6_2 : in std_logic;	 --	 #Pin 6
-		IO_P6_1 : in std_logic;	 --	 #Pin 7
-		IO_P6_0 : in std_logic;	 --	 #Pin 8
-		IO_P7_7 : in std_logic;	 --	 #Pin 1
-		IO_P7_6 : in std_logic;	 --	 #Pin 2
-		IO_P7_5 : in std_logic;	 --	 #Pin 3
-		IO_P7_4 : in std_logic;	 --	 #Pin 4
-		IO_P7_3 : in std_logic;	 --	 #Pin 5
-		IO_P7_2 : in std_logic;	 --	 #Pin 6
-		IO_P7_1 : in std_logic;	 --	 #Pin 7
-		IO_P7_0 : in std_logic;	 --	 #Pin 8
+		IO_P6 				: in std_logic_vector(7 downto 0);	
+		IO_P7 				: in std_logic_vector(7 downto 0);
+		IO_P8 				: out std_logic_vector(7 downto 0);	
+		IO_P9 				: out std_logic_vector(7 downto 0);	
 
-		IO_P8_7 : out std_logic;  --  #Pin 1
-		IO_P8_6 : out std_logic;  --  #Pin 2
-		IO_P8_5 : out std_logic;  --  #Pin 3
-		IO_P8_4 : out std_logic;  --  #Pin 4
-		IO_P8_3 : out std_logic;  --  #Pin 5
-		IO_P8_2 : out std_logic;  --  #Pin 6
-		IO_P8_1 : out std_logic;  --  #Pin 7
-		IO_P8_0 : out std_logic;  --  #Pin 8
-		IO_P9_7 : out std_logic;  --  #Pin 1
-		IO_P9_6 : out std_logic;  --  #Pin 2
-		IO_P9_5 : out std_logic;  --  #Pin 3
-		IO_P9_4 : out std_logic;  --  #Pin 4
-		IO_P9_3 : out std_logic;  --  #Pin 5
-		IO_P9_2 : out std_logic;  --  #Pin 6
-		IO_P9_1 : out std_logic;  --  #Pin 7
-		IO_P9_0 : out std_logic;  --  #Pin 8
-
-		HSync	: out std_logic;
-		VSync	: out std_logic;
-		Red_2	: out std_logic;
-		Red_1	: out std_logic;
-		Red_0	: out std_logic;
-		Green_2 : out std_logic;
-		Green_1 : out std_logic;
-		Green_0 : out std_logic;
-		Blue_2	: out std_logic;
-		Blue_1	: out std_logic
+		HSync				: out std_logic;
+		VSync				: out std_logic;
+		Red					: out std_logic_vector(2 downto 0);
+		Green 				: out std_logic_vector(2 downto 0);
+		Blue				: out std_logic_vector(2 downto 1)
 		);
 end soc;
 
@@ -168,7 +121,6 @@ architecture structural of soc is
 		);
 	end component;
 
-
 	component vga is
 		port(
 			clk_i			: in std_logic;
@@ -187,6 +139,37 @@ architecture structural of soc is
 			blue_o			: out std_logic_vector(2 downto 1)
 		);
 	end component;
+
+	component clocks is
+	generic (
+		PERIOD_PICOS 	: integer := 2500;
+		CLK_DIV_0   	: integer := 2;		-- 200MHz, 0 deg
+		CLK_DIV_1   	: integer := 2;		-- 200MHz, 180 deg
+		CLK_DIV_2   	: integer := 16;	-- 25MHz, 0 deg 
+		CLK_DIV_3   	: integer := 8;		-- 50MHz, 0 deg
+		CLK_DIV_4   	: integer := 4;		-- 100MHz, 0 deg
+		
+		BUF_OUT_MULT 	: integer := 4;
+		DIVCLK_DIV  	: integer := 1
+	);
+	port (
+		sys_clk     	  : in std_logic;
+		sys_rst 	      : in std_logic;
+		
+		sync_reset_out       : out std_logic; -- sync_reset_out
+		async_reset_out      : out std_logic;
+
+		clk_100_mhz_0       : out std_logic; 
+		clk_25_mhz_0        : out std_logic; -- clk0 
+		clk_200_mhz_0     	: out std_logic; -- sysclk_2x
+		clk_200_mhz_180   	: out std_logic; -- sysclk_2x_180
+		clk_50_mhz_0       	: out std_logic; -- _mcb_drp_clk
+		pll_ce_0          	: out std_logic;
+		pll_ce_90         	: out std_logic;
+		pll_lock          	: out std_logic
+	);
+	end component;
+
 
 	signal reset			: std_logic;
 	signal error			: std_logic;
@@ -209,33 +192,70 @@ architecture structural of soc is
 	signal pio_io_ready			: std_logic;
 
 
-	signal in_port_0 : std_logic_vector (7 downto 0); -- dp switches 
-	signal in_port_1 : std_logic_vector (7 downto 0);	-- push btns
-	signal in_port_2 : std_logic_vector (7 downto 0); -- pin header 6
-	signal in_port_3 : std_logic_vector (7 downto 0); -- pin header 7
+	signal in_port_0 		: std_logic_vector (7 downto 0); -- dp switches 
+	signal in_port_1 		: std_logic_vector (7 downto 0);	-- push btns
+	signal in_port_2 		: std_logic_vector (7 downto 0); -- pin header 6
+	signal in_port_3 		: std_logic_vector (7 downto 0); -- pin header 7
 
-	signal out_port_4 : std_logic_vector (7 downto 0); -- individual leds
-	signal out_port_5 : std_logic_vector (7 downto 0); -- 7-segment digits 
-	signal out_port_6 : std_logic_vector (7 downto 0); -- 7-segment enable signals 
-	signal out_port_7 : std_logic_vector (7 downto 0); -- pin header 8
-	signal out_port_8 : std_logic_vector (7 downto 0); -- pin header 9
+	signal out_port_4 		: std_logic_vector (7 downto 0); -- individual leds
+	signal out_port_5 		: std_logic_vector (7 downto 0); -- 7-segment digits 
+	signal out_port_6 		: std_logic_vector (7 downto 0); -- 7-segment enable signals 
+	signal out_port_7 		: std_logic_vector (7 downto 0); -- pin header 8
+	signal out_port_8 		: std_logic_vector (7 downto 0); -- pin header 9
 
-	signal red		   : std_logic_vector(2 downto 0);
-	signal green	   : std_logic_vector(2 downto 0);
-	signal blue		   : std_logic_vector(2 downto 1);
+	signal v_red			: std_logic_vector(2 downto 0);
+	signal v_green	   		: std_logic_vector(2 downto 0);
+	signal v_blue			: std_logic_vector(2 downto 1);
 	
-	signal v_pos_x		: std_logic_vector(6 downto 0);
-	signal v_pos_y		: std_logic_vector(4 downto 0);
+	signal v_pos_x			: std_logic_vector(6 downto 0);
+	signal v_pos_y			: std_logic_vector(4 downto 0);
 	signal v_chr			: std_logic_vector(7 downto 0); 
 	signal v_clr			: std_logic_vector(7 downto 0); 
 	signal v_write_enable	: std_logic;
 
-	signal mem_read_enable : std_logic;
-	signal mem_write_enable : std_logic;
-	signal pio_read_enable : std_logic;
-	signal pio_write_enable : std_logic;
+	signal mem_read_enable 	: std_logic;
+	signal mem_write_enable	: std_logic;
+	signal pio_read_enable	: std_logic;
+	signal pio_write_enable	: std_logic;
+
+	signal sync_reset_out 		: std_logic; -- sync_reset_out
+	signal async_reset_out		: std_logic;
+	signal clk_100_mhz_0  		: std_logic; 
+	signal clk_25_mhz_0   		: std_logic; -- clk0 
+	signal clk_200_mhz_0     	: std_logic; -- sysclk_2x
+	signal clk_200_mhz_180   	: std_logic; -- sysclk_2x_180
+	signal clk_50_mhz_0      	: std_logic; -- _mcb_drp_clk
+	signal pll_ce_0          	: std_logic;
+	signal pll_ce_90         	: std_logic;
+	signal pll_lock          	: std_logic;
 	
 begin 
+
+	cl: clocks generic map (
+		PERIOD_PICOS 	=> 2500,
+		CLK_DIV_0   	=> 2,		-- 200MHz, 0 deg
+		CLK_DIV_1   	=> 2,		-- 200MHz, 180 deg
+		CLK_DIV_2   	=> 16,	-- 25MHz, 0 deg 
+		CLK_DIV_3   	=> 8,		-- 50MHz, 0 deg
+		CLK_DIV_4   	=> 4,		-- 100MHz, 0 deg
+		BUF_OUT_MULT 	=> 4,
+		DIVCLK_DIV  	=> 1
+	)
+	port map (
+		sys_clk     	  => sys_clk,
+		sys_rst 	      => reset,
+		
+		sync_reset_out    => sync_reset_out,
+		async_reset_out   => async_reset_out,
+		clk_100_mhz_0     => clk_100_mhz_0,
+		clk_25_mhz_0      => clk_25_mhz_0, 
+		clk_200_mhz_0     => clk_200_mhz_0,  
+		clk_200_mhz_180   => clk_200_mhz_180,
+		clk_50_mhz_0      => clk_50_mhz_0,
+		pll_ce_0          => pll_ce_0,  
+		pll_ce_90         => pll_ce_90,      
+		pll_lock          => pll_lock      
+	);
 
 	mem_read_enable <= '1' when read_enable = '1' and read_select = DS_MEMORY else '0';
 	mem_write_enable <= '1' when write_enable = '1' and write_select = DS_MEMORY else '0';
@@ -245,7 +265,7 @@ begin
 	data_i <= mem_data_r when read_select = DS_MEMORY else pio_data_r;
 
 	c : cpu port map (
-		clk_i						=> clk,
+		clk_i					=> clk_100_mhz_0,
 		reset_i					=> reset,
 		error_o					=> error,
 
@@ -277,7 +297,7 @@ begin
 	);
 
 	m: memory port map (
-		clk_i				=> clk,
+		clk_i			=> clk_100_mhz_0,
 		address_i		=> address,
 		data_i			=> data_o,
 		data_o			=> mem_data_r,
@@ -286,7 +306,7 @@ begin
 	);
 					
 	p: pio port map (
-		clk_i					=> clk,
+		clk_i					=> clk_100_mhz_0,
 		rst_i					=> reset,
 			
 		port_address_i			=> address,
@@ -307,10 +327,9 @@ begin
 		gpio_7_o				=> out_port_7,
 		gpio_8_o				=> out_port_8
 	);
-	
-		
+			
 	v: vga port map (
-		clk_i			=> clk,
+		clk_i			=> clk_100_mhz_0,
 		
 		pos_x_i			=> v_pos_x,
 		pos_y_i			=> v_pos_y,
@@ -320,96 +339,34 @@ begin
 		
 		hsync_o			=> HSync,
 		vsync_o			=> VSync,
-		red_o			=> red,
-		green_o			=> green,
-		blue_o			=> blue
+		red_o			=> v_red,
+		green_o			=> v_green,
+		blue_o			=> v_blue
 	 );
 	
 	-- Finally - manual signal wirings 
-	reset <= not Switch_5; -- it is pull up
+	reset <= not Switch(5); -- it is pull up
 	
-	in_port_1(7 downto 5) <= "000"; -- NC really
-	in_port_1(4) <= not Switch_4;
-	in_port_1(3) <= not Switch_3;
-	in_port_1(2) <= not Switch_2;
-	in_port_1(1) <= not Switch_1;
-	in_port_1(0) <= not Switch_0;
+	in_port_1 <= "000" & (not Switch(4 downto 0));
 	
-	LED_7 <= Switch_5;
-	LED_6 <= error;
-	LED_5 <= out_port_4(5);
-	LED_4 <= out_port_4(4);
-	LED_3 <= out_port_4(3);
-	LED_2 <= out_port_4(2);
-	LED_1 <= out_port_4(1);
-	LED_0 <= out_port_4(0);
+	LED(7) <= Switch(5);
+	LED(6) <= error;
+	LED(5 downto 0) <= out_port_4(5 downto 0);
 	
-	in_port_0(0) <= DPSwitch_0;
-	in_port_0(1) <= DPSwitch_1;
-	in_port_0(2) <= DPSwitch_2;
-	in_port_0(3) <= DPSwitch_3;
-	in_port_0(4) <= DPSwitch_4;
-	in_port_0(5) <= DPSwitch_5;
-	in_port_0(6) <= DPSwitch_6;
-	in_port_0(7) <= DPSwitch_7;
+	in_port_0 <= DPSwitch;
 
-	in_port_2(0) <= IO_P6_7;
-	in_port_2(1) <= IO_P6_6;
-	in_port_2(2) <= IO_P6_5;
-	in_port_2(3) <= IO_P6_4;
-	in_port_2(4) <= IO_P6_3;
-	in_port_2(5) <= IO_P6_2;
-	in_port_2(6) <= IO_P6_1;
-	in_port_2(7) <= IO_P6_0;
+	in_port_2 <= IO_P6;
+	in_port_3 <= IO_P7;
 
-	in_port_3(0) <= IO_P7_7;
-	in_port_3(1) <= IO_P7_6;
-	in_port_3(2) <= IO_P7_5;
-	in_port_3(3) <= IO_P7_4;
-	in_port_3(4) <= IO_P7_3;
-	in_port_3(5) <= IO_P7_2;
-	in_port_3(6) <= IO_P7_1;
-	in_port_3(7) <= IO_P7_0;
+	SevenSegment <= out_port_5;
 
-	SevenSegment_7 <= out_port_5(7);
-	SevenSegment_6 <= out_port_5(6);
-	SevenSegment_5 <= out_port_5(5);
-	SevenSegment_4 <= out_port_5(4);
-	SevenSegment_3 <= out_port_5(3);
-	SevenSegment_2 <= out_port_5(2);
-	SevenSegment_1 <= out_port_5(1);
-	SevenSegment_0 <= out_port_5(0);   
-		
-	SevenSegmentEnable_2 <= out_port_6(2);
-	SevenSegmentEnable_1 <= out_port_6(1);
-	SevenSegmentEnable_0 <= out_port_6(0);
+	SevenSegmentEnable(2 downto 0) <= out_port_6(2 downto 0);
 
-	IO_P8_7 <= out_port_7(0);
-	IO_P8_6 <= out_port_7(1);
-	IO_P8_5 <= out_port_7(2);
-	IO_P8_4 <= out_port_7(3);
-	IO_P8_3 <= out_port_7(4);
-	IO_P8_2 <= out_port_7(5);
-	IO_P8_1 <= out_port_7(6);
-	IO_P8_0 <= out_port_7(7);
-	
-	IO_P9_7 <= out_port_8(0);
-	IO_P9_6 <= out_port_8(1);
-	IO_P9_5 <= out_port_8(2);
-	IO_P9_4 <= out_port_8(3);
-	IO_P9_3 <= out_port_8(4);
-	IO_P9_2 <= out_port_8(5);
-	IO_P9_1 <= out_port_8(6);
-	IO_P9_0 <= out_port_8(7);
+	IO_P8 <= out_port_7;
+	IO_P9 <= out_port_8;
 
-	Red_2  <= red(2);
-	Red_1  <= red(1);
-	Red_0  <= red(0);
-	Green_2<= green(2);
-	Green_1<= green(1);
-	Green_0<= green(0);
-	Blue_2 <= blue(2);
-	Blue_1 <= blue(1);
-
+	Red <= v_red;
+	Green <= v_green;
+	Blue <= v_blue;
 
 end structural;
