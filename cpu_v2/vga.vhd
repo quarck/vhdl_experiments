@@ -36,15 +36,13 @@ architecture behavioral of vga is
 	end component;
 
 
-	type screen_mem_type is array (0 to 80*30) of std_logic_vector(7 downto 0);
+	-- 8-bits of color followed by 8 bits of chr
+	type screen_mem_type is array (0 to 80*30) of std_logic_vector(15 downto 0);
 
-	signal char_memory	: screen_mem_type := (others => x"00");
+	signal video_memory	: screen_mem_type := (others => x"ff00");
 		
-	signal color_memory : screen_mem_type := ( others => x"FF" );
-
 	attribute ram_style: string;
-	attribute ram_style of char_memory : signal is "block";
-	attribute ram_style of color_memory : signal is "block";
+	attribute ram_style of video_memory : signal is "block";
 
 	-- Set the resolution of screen
 	signal pixel_x		 : integer range 0 to 1023 := 640;
@@ -61,8 +59,8 @@ architecture behavioral of vga is
 	signal gen_x : integer range 0 to 7 := 0;
 	signal gen_y : integer range 0 to 15 := 0;
 
-	signal chr : std_logic_vector(7 downto 0);
-	signal clr : std_logic_vector(7 downto 0);
+	signal clr_chr : std_logic_vector(15 downto 0);
+
 	signal chrg_line: std_logic_vector(0 to 7);
 	
 	
@@ -75,7 +73,7 @@ begin
 
 	rom: vga_chrg_rom port map(
 		clk_i	=> clk_i,
-		chr_i	=> chr(6 downto 0), 
+		chr_i	=> clr_chr(6 downto 0), 
 		gen_y_i	=> gen_y,
 		line_o	=> chrg_line
 	);
@@ -96,8 +94,7 @@ write_process:
 				if x <= 80 and y <= 30 
 				then 
 					offset := 64 * y + 16 * y + x;
-					char_memory(offset) <= chr_i;
-					color_memory(offset) <= clr_i;
+					video_memory(offset) <= clr_i & chr_i;
 				end if;			
 			end if;
 		end if;		
@@ -139,8 +136,9 @@ generate_signal:
 				when "01" => 
 					if chr_x < 80 and chr_y < 30 
 					then 
-						chr <= char_memory(vram_line_base + chr_x);
-						clr <= color_memory(vram_line_base + chr_x);
+						clr_chr <= video_memory(vram_line_base + chr_x);
+					else 
+						clr_chr <= (others => '0');
 					end if;
 				
 				when "10" => 
@@ -150,9 +148,9 @@ generate_signal:
 				
 				when others => 
 				
-					if chr_x < 80 and chr_y < 30 and chrg_line(gen_x) = '1' 
+					if chrg_line(gen_x) = '1' 
 					then 
-						rgb := clr;
+						rgb := clr_chr(15 downto 8);
 					else 
 						rgb := x"00";
 					end if;

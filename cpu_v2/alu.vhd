@@ -45,15 +45,15 @@ architecture behaviour of ALU is
 
 
 	type sync_alu_state_type is (
-		 IDLE -- ,
--- 		 ALU_IMUL_PREPARE, 
--- 		 ALU_IDIV_PREPARE,
--- 		 ALU_MUL_COMPUTE,
--- 		 ALU_DIV_COMPUTE,
--- 		 ALU_MUL_FINISH, 
--- 		 ALU_IMUL_FINISH,
--- 		 ALU_DIV_FINISH, 
--- 		 ALU_IDIV_FINISH
+		 IDLE,
+ 		 ALU_IMUL_PREPARE, 
+ 		 ALU_IDIV_PREPARE,
+ 		 ALU_MUL_COMPUTE,
+ 		 ALU_DIV_COMPUTE,
+ 		 ALU_MUL_FINISH, 
+ 		 ALU_IMUL_FINISH,
+ 		 ALU_DIV_FINISH, 
+ 		 ALU_IDIV_FINISH
 	);
 	
 	signal sync_alu_state : sync_alu_state_type := IDLE;
@@ -206,152 +206,153 @@ begin
 				when IDLE =>
 					case operation_i is 
 
---						when ALU_MUL | ALU_IMUL =>	
---							acc <= (others => '0'); 
---							left_acc <= all_zeroes & left_l_i;
---							right_acc <= right_l_i;
---							cnt <= 0;
---							result_sign <= '0';
---							
---							if operation_i = ALU_IMUL
---							then 
---								sync_alu_state <= ALU_IMUL_PREPARE;
---							else
---								sync_alu_state <= ALU_MUL_COMPUTE;
---							end if;
---							
--- 						when ALU_DIV | ALU_IDIV =>	 
--- 							left_acc <= left_h_i & left_l_i;
--- 							wide_right_acc <= '0' & right_l_i & one_less_zero;
--- 							acc <= (others => '0');
---							cnt <= 0;
---							result_sign <= '0';
---
---							if operation_i = ALU_IDIV
---							then 
---								sync_alu_state <= ALU_IDIV_PREPARE;
---							else
---								sync_alu_state <= ALU_DIV_COMPUTE;
---							end if;
+						when ALU_MUL | ALU_IMUL =>	
+							acc <= (others => '0'); 
+							left_acc <= all_zeroes & left_l_i;
+							right_acc <= right_l_i;
+							cnt <= 0;
+							result_sign <= '0';
+							
+							if operation_i = ALU_IMUL
+							then 
+								sync_alu_state <= ALU_IMUL_PREPARE;
+							else
+								sync_alu_state <= ALU_MUL_COMPUTE;
+							end if;
+							
+ 						when ALU_DIV | ALU_IDIV =>	 
+ 							left_acc <= left_h_i & left_l_i;
+ 							wide_right_acc <= '0' & right_l_i & one_less_zero;
+ 							acc <= (others => '0');
+							cnt <= 0;
+							result_sign <= '0';
+
+							if operation_i = ALU_IDIV
+							then 
+								sync_alu_state <= ALU_IDIV_PREPARE;
+							else
+								sync_alu_state <= ALU_DIV_COMPUTE;
+							end if;
 
 						when others	=> 
 								sync_alu_state <= IDLE;
 					end case;
 
--- 				when ALU_IMUL_PREPARE => 
--- 					result_sign <= left_acc(nbits-1) xor right_acc(nbits-1);
--- 					
--- 					if left_acc(nbits-1) = '1' 	-- negative number 
--- 					then 
--- 						left_acc <= all_zeroes & (0 - left_l_i);
--- 					end if;
--- 
--- 					if right_acc(nbits-1) = '1' 	-- negative number 
--- 					then 
--- 						right_acc <= 0 - right_acc;
--- 					end if;
--- 
--- 					sync_alu_state <= ALU_MUL_COMPUTE;
--- 							
--- 				when ALU_MUL_COMPUTE => 
--- 					if right_acc(0) /= '0' 
--- 					then 
--- 						acc <= acc + left_acc;
--- 					end if;
--- 
--- 					left_acc <= left_acc(2*nbits-2 downto 0) & '0';
--- 					right_acc <= '0' & right_acc(nbits-1 downto 1);
--- 					
--- 					if cnt = nbits-1 
--- 					then 
--- 						if result_sign = '1'
--- 						then 
--- 							sync_alu_state <= ALU_IMUL_FINISH;
--- 						else 
--- 							sync_alu_state <= ALU_MUL_FINISH;
--- 						end if;
--- 					end if;
--- 					cnt <= cnt + 1;
--- 								
--- 				when ALU_IMUL_FINISH => 
--- 					acc <= 0 - acc;
--- 					sync_alu_state <= ALU_MUL_FINISH;
--- 
--- 				when ALU_MUL_FINISH => 
--- 					sync_flags_o <= (others => '0');
--- 					if acc = (all_zeroes & all_zeroes)
--- 					then 
--- 						sync_flags_o.zero <= '1';
--- 					end if;
--- 					if acc(2*nbits-1 downto nbits) /= all_zeroes
--- 					then 
--- 						sync_flags_o.overflow <= '1';
--- 					end if;
--- 					
--- 					sync_flags_o.negative <= result_sign;
--- 
--- 					sync_result_h_o <= acc(2*nbits-1 downto nbits);
--- 					sync_result_l_o <= acc(nbits-1 downto 0);
--- 					sync_alu_state <= IDLE;
--- 
--- 
--- 				when ALU_IDIV_PREPARE => 
--- 					
--- 					result_sign <= left_h_i(nbits-1) xor right_l_i(nbits-1);
--- 
--- 					if left_h_i(nbits-1) = '1'
--- 					then 
--- 						left_acc <= 0 - left_acc; 
--- 					end if;
--- 					
--- 					if right_l_i(nbits-1) = '1'
--- 					then
--- 						wide_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
--- 					end if;
--- 
--- 					sync_alu_state <= ALU_DIV_COMPUTE;
--- 
---  				when ALU_DIV_COMPUTE =>
--- 				
--- 					if left_acc >= wide_right_acc
--- 					then 
--- 						left_acc <= left_acc - wide_right_acc;
--- 						acc <= acc(2*nbits-2 downto 0) & '1';
--- 					else 
--- 						acc <= acc(2*nbits-2 downto 0) & '0';
--- 					end if;
--- 
--- 					wide_right_acc <= '0' & wide_right_acc(2*nbits-1 downto 1);
--- 
--- 
--- 					if cnt = nbits-1
--- 					then 
--- 						if result_sign = '1'
--- 						then 
--- 							sync_alu_state <= ALU_IDIV_FINISH;
--- 						else 
--- 							sync_alu_state <= ALU_DIV_FINISH;
--- 						end if;
--- 					end if;
--- 					cnt <= cnt + 1;
--- 
---  				when ALU_IDIV_FINISH =>
--- 					acc <= 0 - acc;
--- 					left_acc <= 0 - left_acc; -- note - this is probably incorrect!
---  					sync_alu_state <= ALU_DIV_FINISH;
---  				
---  				when ALU_DIV_FINISH =>
---  					sync_flags_o <= (others => '0');
---  					if left_acc > wide_right_acc
---  					then 
---  						sync_flags_o.divide_by_zero <= '1';
---  					end if;
--- 					
--- 					sync_flags_o.negative <= result_sign;
---  					
---  					sync_result_l_o <= acc(nbits-1 downto 0);
---  					sync_result_h_o <= left_acc(nbits-1 downto 0);
---  					sync_alu_state <= IDLE;
+ 				when ALU_IMUL_PREPARE => 
+ 					result_sign <= left_acc(nbits-1) xor right_acc(nbits-1);
+ 					
+ 					if left_acc(nbits-1) = '1' 	-- negative number 
+ 					then 
+ 						left_acc <= all_zeroes & (0 - left_l_i);
+ 					end if;
+ 
+ 					if right_acc(nbits-1) = '1' 	-- negative number 
+ 					then 
+ 						right_acc <= 0 - right_acc;
+ 					end if;
+ 
+ 					sync_alu_state <= ALU_MUL_COMPUTE;
+ 							
+ 				when ALU_MUL_COMPUTE => 
+ 					if right_acc(0) /= '0' 
+ 					then 
+ 						acc <= acc + left_acc;
+ 					end if;
+ 
+ 					left_acc <= left_acc(2*nbits-2 downto 0) & '0';
+ 					right_acc <= '0' & right_acc(nbits-1 downto 1);
+ 					
+ 					if cnt = nbits-1 
+ 					then 
+ 						if result_sign = '1'
+ 						then 
+ 							sync_alu_state <= ALU_IMUL_FINISH;
+ 						else 
+ 							sync_alu_state <= ALU_MUL_FINISH;
+ 						end if;
+ 					end if;
+
+ 					cnt <= cnt + 1;
+ 								
+ 				when ALU_IMUL_FINISH => 
+ 					acc <= 0 - acc;
+ 					sync_alu_state <= ALU_MUL_FINISH;
+ 
+ 				when ALU_MUL_FINISH => 
+ 					sync_flags_o <= (others => '0');
+ 					if acc = (all_zeroes & all_zeroes)
+ 					then 
+ 						sync_flags_o.zero <= '1';
+ 					end if;
+ 					if acc(2*nbits-1 downto nbits) /= all_zeroes
+ 					then 
+ 						sync_flags_o.overflow <= '1';
+ 					end if;
+ 					
+ 					sync_flags_o.negative <= result_sign;
+ 
+ 					sync_result_h_o <= acc(2*nbits-1 downto nbits);
+ 					sync_result_l_o <= acc(nbits-1 downto 0);
+ 					sync_alu_state <= IDLE;
+ 
+ 
+ 				when ALU_IDIV_PREPARE => 
+ 					
+ 					result_sign <= left_h_i(nbits-1) xor right_l_i(nbits-1);
+ 
+ 					if left_h_i(nbits-1) = '1'
+ 					then 
+ 						left_acc <= 0 - left_acc; 
+ 					end if;
+ 					
+ 					if right_l_i(nbits-1) = '1'
+ 					then
+ 						wide_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
+ 					end if;
+ 
+ 					sync_alu_state <= ALU_DIV_COMPUTE;
+ 
+  				when ALU_DIV_COMPUTE =>
+ 				
+ 					if left_acc >= wide_right_acc
+ 					then 
+ 						left_acc <= left_acc - wide_right_acc;
+ 						acc <= acc(2*nbits-2 downto 0) & '1';
+ 					else 
+ 						acc <= acc(2*nbits-2 downto 0) & '0';
+ 					end if;
+ 
+ 					wide_right_acc <= '0' & wide_right_acc(2*nbits-1 downto 1);
+ 
+ 
+ 					if cnt = nbits-1
+ 					then 
+ 						if result_sign = '1'
+ 						then 
+ 							sync_alu_state <= ALU_IDIV_FINISH;
+ 						else 
+ 							sync_alu_state <= ALU_DIV_FINISH;
+ 						end if;
+ 					end if;
+ 					cnt <= cnt + 1;
+ 
+  				when ALU_IDIV_FINISH =>
+ 					acc <= 0 - acc;
+ 					left_acc <= 0 - left_acc; -- note - this is probably incorrect!
+  					sync_alu_state <= ALU_DIV_FINISH;
+  				
+  				when ALU_DIV_FINISH =>
+  					sync_flags_o <= (others => '0');
+  					if left_acc > wide_right_acc
+  					then 
+  						sync_flags_o.divide_by_zero <= '1';
+  					end if;
+ 					
+ 					sync_flags_o.negative <= result_sign;
+  					
+  					sync_result_l_o <= acc(nbits-1 downto 0);
+  					sync_result_h_o <= left_acc(nbits-1 downto 0);
+  					sync_alu_state <= IDLE;
  				
 			end case;
 		end if;

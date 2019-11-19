@@ -6,7 +6,7 @@ use work.opcodes.all;
 
 entity memory is
 	generic (
-		mem_size : integer := 16*1024
+		mem_size : integer := 16*1024 -- of 2-byte words, 32k in total. 
 	);
 	port
 	(
