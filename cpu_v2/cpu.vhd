@@ -62,7 +62,6 @@ architecture structural of cpu is
 			pio_io_ready_i			: in std_logic;
 
 			alu_operation_o			: out std_logic_vector(4 downto 0);
-			alu_sync_select_o		: out std_logic; -- latched MSB of operation_i
 			alu_left_h_o			: out std_logic_vector(15 downto 0);
 			alu_left_l_o			: out std_logic_vector(15 downto 0);
 			alu_right_l_o			: out std_logic_vector(15 downto 0);
@@ -70,7 +69,7 @@ architecture structural of cpu is
 			alu_result_h_i			: in std_logic_vector(15 downto 0);
 			alu_result_l_i			: in std_logic_vector(15 downto 0);
 			alu_flags_i				: in ALU_flags;
-			alu_sync_ready_i		: in std_logic;
+			alu_ready_i				: in std_logic;
 			
 			-- direct access to the video adapter 
 			-- todo - remove this later in favour of using I/O ports 
@@ -99,7 +98,6 @@ architecture structural of cpu is
 			clk_i				: in std_logic;
 			rst_i				: in std_logic; 
 			operation_i			: in std_logic_vector(4 downto 0);
-			sync_select_i	: in std_logic; -- latched MSB of operation_i
 			left_h_i			: in std_logic_vector(nbits-1 downto 0);
 			left_l_i			: in std_logic_vector(nbits-1 downto 0);
 			right_l_i			: in std_logic_vector(nbits-1 downto 0);
@@ -107,12 +105,11 @@ architecture structural of cpu is
 			result_h_o			: out std_logic_vector(nbits-1 downto 0);
 			result_l_o			: out std_logic_vector(nbits-1 downto 0);
 			flags_o				: out ALU_flags;
-			sync_ready_o		: out std_logic
+			ready_o				: out std_logic
 		);
 	end component;
 
 	signal alu_operation		: std_logic_vector(4 downto 0);
-	signal alu_sync_select	: std_logic;
 	signal alu_left_h			: std_logic_vector(15 downto 0);
 	signal alu_left_l			: std_logic_vector(15 downto 0);
 	signal alu_right_l			: std_logic_vector(15 downto 0);
@@ -120,7 +117,7 @@ architecture structural of cpu is
 	signal alu_result_h			: std_logic_vector(15 downto 0);
 	signal alu_result_l			: std_logic_vector(15 downto 0);
 	signal alu_flags			: ALU_flags;
-	signal alu_sync_ready		: std_logic;
+	signal alu_ready			: std_logic;
 
 	
 begin
@@ -145,7 +142,6 @@ begin
 		pio_io_ready_i			=> pio_io_ready_i,
 
 		alu_operation_o			=> alu_operation,
-		alu_sync_select_o		=> alu_sync_select,
 		alu_left_h_o			=> alu_left_h,
 		alu_left_l_o			=> alu_left_l,
 		alu_right_l_o			=> alu_right_l,
@@ -153,7 +149,7 @@ begin
 		alu_result_h_i			=> alu_result_h,
 		alu_result_l_i			=> alu_result_l,
 		alu_flags_i				=> alu_flags,
-		alu_sync_ready_i		=> alu_sync_ready,
+		alu_ready_i				=> alu_ready,
 
 		vga_pos_x_o				=> vga_pos_x_o,
 		vga_pos_y_o				=> vga_pos_y_o,
@@ -171,7 +167,6 @@ begin
 		clk_i				=> clk_i,
 		rst_i				=> reset_i,
 		operation_i			=> alu_operation,
-		sync_select_i		=> alu_sync_select,
 		left_h_i			=> alu_left_h,
 		left_l_i			=> alu_left_l,
 		right_l_i			=> alu_right_l,
@@ -179,7 +174,7 @@ begin
 		result_h_o			=> alu_result_h,
 		result_l_o			=> alu_result_l,
 		flags_o				=> alu_flags,
-		sync_ready_o		=> alu_sync_ready
+		ready_o				=> alu_ready
 	);
 		
 end structural;

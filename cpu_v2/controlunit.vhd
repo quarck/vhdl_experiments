@@ -29,7 +29,6 @@ entity controlunit is
 		pio_io_ready_i			: in std_logic;
 	
 		alu_operation_o			: out std_logic_vector(4 downto 0);
-		alu_sync_select_o		: out std_logic; -- latched MSB of operation_i
 		alu_left_h_o			: out std_logic_vector(15 downto 0);
 		alu_left_l_o			: out std_logic_vector(15 downto 0);
 		alu_right_l_o			: out std_logic_vector(15 downto 0);
@@ -37,7 +36,7 @@ entity controlunit is
 		alu_result_h_i			: in std_logic_vector(15 downto 0);
 		alu_result_l_i			: in std_logic_vector(15 downto 0);
 		alu_flags_i				: in ALU_flags;
-		alu_sync_ready_i		: in std_logic;
+		alu_ready_i				: in std_logic;
 		
 		-- direct access to the video adapter 
 		-- todo - remove this later in favour of using I/O ports 
@@ -95,7 +94,6 @@ begin
 			address_o		<= (others => '0');
 			data_o			<= (others => '0');
 			alu_operation_o	<= (others => '0');
-			alu_sync_select_o <= '0';
 			alu_left_h_o	<= (others => '0');
 			alu_left_l_o	<= (others => '0');
 			alu_right_l_o	<= (others => '0');
@@ -155,28 +153,25 @@ begin
 						
 						when OP_AALU_RR => 
 							alu_operation_o <= data_i(12 downto 8);
-							alu_sync_select_o <= '0';
 							alu_carry_o <= flags.carry_out;
 							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
 							alu_right_l_o <= regfile(conv_integer(data_i(3 downto 0)));
-							cpu_state <= STORE;
+							cpu_state <= WAIT_AND_STORE_ALU_1;
 
 						when OP_AALU_RV => 
 							alu_operation_o <= data_i(12 downto 8);
-							alu_sync_select_o <= '0';
 							alu_carry_o <= flags.carry_out;
 							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
 							alu_right_l_o <= "000000000000" & data_i(3 downto 0);
-							cpu_state <= STORE;
+							cpu_state <= WAIT_AND_STORE_ALU_1;
 
 						when OP_SALU_RR =>
 							alu_operation_o <= data_i(12 downto 8);
-							alu_sync_select_o <= '1';
 							alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
 							alu_left_h_o <= regfile(conv_integer(data_i(7 downto 4) xor "0001"));
 							alu_right_l_o <= (others => '0');
 							alu_right_l_o <= regfile(conv_integer(data_i(3 downto 0)));
-							cpu_state <= WAIT_AND_STORE_SALU_1; -- SALU is not implemented yet
+							cpu_state <= WAIT_AND_STORE_WIDE_ALU_1; 
 						
 						when OP_MOVE_GROUP => 
 							case data_i(11 downto 10) is 
@@ -229,7 +224,6 @@ begin
 
 								when OP_SEVENSEGTRANSLATE =>
 									alu_operation_o <= ALU_SHR;
-									alu_sync_select_o <= '0';
 									alu_carry_o <= '0';									
 									alu_left_l_o <= regfile(conv_integer(data_i(7 downto 4)));
 									alu_right_l_o <= "000000000000" & data_i(3 downto 0);
@@ -347,53 +341,63 @@ begin
 					end if;
 
 
-				when WAIT_AND_STORE_SALU_1 => 
-					cpu_state <= WAIT_AND_STORE_SALU_2;
+				when WAIT_AND_STORE_WIDE_ALU_1 => 
+					cpu_state <= WAIT_AND_STORE_WIDE_ALU_2;
 					
-				when WAIT_AND_STORE_SALU_2 => 
-					if alu_sync_ready_i = '1' 
+				when WAIT_AND_STORE_WIDE_ALU_2 => 
+					if alu_ready_i = '1' 
 					then 
 						regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
 						flags <= alu_flags_i;
 						alu_operation_o <= ALU_NOP;
-						cpu_state <= WAIT_AND_STORE_SALU_3;
+						cpu_state <= WAIT_AND_STORE_WIDE_ALU_3;
 					end if;
 					
-				when WAIT_AND_STORE_SALU_3 =>
+				when WAIT_AND_STORE_WIDE_ALU_3 =>
 					regfile(conv_integer(instruction_register(7 downto 4) xor "0001" )) <= alu_result_h_i;
 					cpu_state <= FETCH_0;
 
-				when STORE	=>	
-					regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
-					flags <= alu_flags_i;
-					-- alu_operation_o <= ALU_NOP;
-										
-					cpu_state <= FETCH_0;
+				when WAIT_AND_STORE_ALU_1 =>	
+					cpu_state <= WAIT_AND_STORE_ALU_2;
+
+				when WAIT_AND_STORE_ALU_2 =>
+					if alu_ready_i = '1' 
+					then
+						regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
+						flags <= alu_flags_i;
+						alu_operation_o <= ALU_NOP;
+						cpu_state <= FETCH_0;
+					end if;
+
 
 				when EXECUTE_7SEG_1 => 
-					-- alu_operation_o <= ALU_NOP;
-
-					case alu_result_l_i(3 downto 0) is 
-						when "0000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111100";
-						when "0001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100000";
-						when "0010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011011010";
-						when "0011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110010"; 
-						when "0100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100110";
-						when "0101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010110110";
-						when "0110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010111110";
-						when "0111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011100000";
-						when "1000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111110";
-						when "1001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110110";
-						when "1010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011101110";
-						when "1011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000111110";
-						when "1100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011100";
-						when "1101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001111010";
-						when "1110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011110";
-						when "1111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010001110";								 
-						when others => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000000010";
-					end case;
-					cpu_state <= FETCH_0; 
-
+					cpu_state <= EXECUTE_7SEG_2;
+					
+				when EXECUTE_7SEG_2 => 
+					if alu_ready_i = '1' 
+					then
+						case alu_result_l_i(3 downto 0) is 
+							when "0000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111100";
+							when "0001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100000";
+							when "0010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011011010";
+							when "0011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110010"; 
+							when "0100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100110";
+							when "0101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010110110";
+							when "0110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010111110";
+							when "0111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011100000";
+							when "1000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111110";
+							when "1001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110110";
+							when "1010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011101110";
+							when "1011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000111110";
+							when "1100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011100";
+							when "1101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001111010";
+							when "1110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011110";
+							when "1111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010001110";								 
+							when others => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000000010";
+						end case;
+						alu_operation_o <= ALU_NOP;
+						cpu_state <= FETCH_0;
+					end if;
 
 				when EXECUTE_SET_XY => 
 					vga_pos_x_o <= regfile(conv_integer(instruction_register(7 downto 4))) (6 downto 0);
