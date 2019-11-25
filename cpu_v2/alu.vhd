@@ -58,20 +58,22 @@ architecture behaviour of ALU is
 		ALU_IDIV_FINISH
 	);
 	
-	signal state 			: alu_state_type := IDLE;
+	signal state 				: alu_state_type := IDLE;
 
-	signal add_sub_acc 		: std_logic_vector(nbits downto 0);
+	signal add_sub_acc 			: std_logic_vector(nbits downto 0);
+	signal add_update_overflow 	: std_logic;
+	signal sub_update_overflow 	: std_logic;
 
-	signal mul_acc			: std_logic_vector(2*nbits-1 downto 0);
-	signal div_acc			: std_logic_vector(2*nbits-1 downto 0);
+	signal mul_result_acc		: std_logic_vector(2*nbits-1 downto 0);
+	signal mul_left_acc			: std_logic_vector(2*nbits-1 downto 0);
+	signal mul_right_acc		: std_logic_vector(nbits-1 downto 0);
+	
+	signal div_result_acc		: std_logic_vector(2*nbits-1 downto 0);
+	signal div_left_acc			: std_logic_vector(2*nbits-1 downto 0);
+	signal div_right_acc		: std_logic_vector(2*nbits-1 downto 0);
 
-	-- todo: move these around by state 
-	signal left_acc			: std_logic_vector(2*nbits-1 downto 0);
-	signal right_acc		: std_logic_vector(nbits-1 downto 0);
-	signal wide_right_acc	: std_logic_vector(2*nbits-1 downto 0);
-
-	signal cnt				: integer range 0 to nbits := 0;
-	signal result_sign		: std_logic; -- sign of the result
+	signal cnt					: integer range 0 to nbits := 0;
+	signal result_sign			: std_logic; -- sign of the result
 
 begin
 	-- output multiplexing.. 
@@ -80,6 +82,9 @@ begin
 	
 
 	process (clk_i, rst_i)
+	
+		variable right_as_uint: integer;
+		variable mask : std_logic_vector(nbits-1 downto 0);
 	begin
 		if rst_i = '1'
 		then
@@ -89,6 +94,12 @@ begin
 			state		<= IDLE;
 		elsif rising_edge(clk_i)
 		then 
+		
+			add_update_overflow <= '0';
+			sub_update_overflow <= '0';
+			
+			right_as_uint := to_integer(unsigned(right_l_i));
+			
 			case state is 
 				when IDLE =>
 					case operation_i is 
@@ -100,14 +111,9 @@ begin
 							else 
 								add_sub_acc <= ('0' & left_l_i) + ('0' & right_l_i);
 			 				end if;
-			 				
-			 				if left_l_i(nbits-1) = right_l_i(nbits-1) then 
-			 					flags_o.overflow <= (left_l_i(nbits-1) xor temp(nbits-1));
-			 				else 
-			 					flags_o.overflow <= '0';
-			 				end if;
+							add_update_overflow <= '1';			 				
 							state <= ALU_SIMPL_FINISH;
-			 				
+
 			 			when ALU_SUB | ALU_SUBC | ALU_CMP =>
 			 				if operation_i = ALU_SUBC 
 			 				then 
@@ -115,12 +121,7 @@ begin
 							else 
 								add_sub_acc <= ('0'&left_l_i) - ('0'&right_l_i);
 			 				end if;
-			 				
-			 				if left_l_i(nbits-1) /= right_l_i(nbits-1) then 
-			 					flags_o.overflow <= (left_l_i(nbits-1) xor temp(nbits-1));
-			 				else
-			 					flags_o.overflow <= '0';
-			 				end if;
+							sub_update_overflow <= '1';
 							state <= ALU_SIMPL_FINISH;
 
 			 			when ALU_NEG =>
@@ -180,9 +181,9 @@ begin
 
 
 						when ALU_MUL | ALU_IMUL =>	
-							mul_acc <= (others => '0'); 
-							left_acc <= all_zeroes & left_l_i;
-							right_acc <= right_l_i;
+							mul_result_acc <= (others => '0'); 
+							mul_left_acc <= all_zeroes & left_l_i;
+							mul_right_acc <= right_l_i;
 							cnt <= 0;
 							result_sign <= '0';
 							
@@ -194,9 +195,9 @@ begin
 							end if;
 							
  						when ALU_DIV | ALU_IDIV =>	 
- 							left_acc <= left_h_i & left_l_i;
- 							wide_right_acc <= '0' & right_l_i & one_less_zero;
- 							mul_acc <= (others => '0');
+ 							div_left_acc <= left_h_i & left_l_i;
+ 							div_right_acc <= '0' & right_l_i & one_less_zero;
+ 							mul_result_acc <= (others => '0');
 							cnt <= 0;
 							result_sign <= '0';
 
@@ -212,6 +213,25 @@ begin
 					end case;
 
 				when ALU_SIMPL_FINISH => 
+					if add_update_overflow = '1' 
+					then 
+						if left_l_i(nbits-1) = right_l_i(nbits-1) then 
+							flags_o.overflow <= (left_l_i(nbits-1) xor add_sub_acc(nbits-1));
+						else 
+							flags_o.overflow <= '0';
+						end if;
+					end if;
+
+					if sub_update_overflow = '1'
+					then 
+						if left_l_i(nbits-1) /= right_l_i(nbits-1) then 
+							flags_o.overflow <= (left_l_i(nbits-1) xor add_sub_acc(nbits-1));
+						else
+							flags_o.overflow <= '0';
+						end if;
+					end if;
+				
+				
 					if add_sub_acc(nbits-1 downto 0) = all_zeroes then 
 						flags_o.zero <= '1';
 					else 
@@ -232,33 +252,33 @@ begin
 
 
  				when ALU_IMUL_PREPARE => 
-  					result_sign <= left_acc(nbits-1) xor right_acc(nbits-1);
+  					result_sign <= mul_left_acc(nbits-1) xor mul_right_acc(nbits-1);
   					
-  					if left_acc(nbits-1) = '1' 	-- negative number 
+  					if mul_left_acc(nbits-1) = '1' 	-- negative number 
   					then 
-  						left_acc <= all_zeroes & (0 - left_l_i);
+  						mul_left_acc <= all_zeroes & (0 - left_l_i);
   					end if;
   
-  					if right_acc(nbits-1) = '1' 	-- negative number 
+  					if mul_right_acc(nbits-1) = '1' 	-- negative number 
   					then 
-  						right_acc <= 0 - right_acc;
+  						mul_right_acc <= 0 - mul_right_acc;
   					end if;
  
  					state <= ALU_MUL_COMPUTE_A;
  							
  				when ALU_MUL_COMPUTE_A => 
 
- 					if right_acc(0) /= '0' 
+ 					if mul_right_acc(0) /= '0' 
  					then 
- 						mul_acc <= mul_acc + left_acc;
+ 						mul_result_acc <= mul_result_acc + mul_left_acc;
  					end if;
  
 					state <= ALU_MUL_COMPUTE_B;
 	
 					
  				when ALU_MUL_COMPUTE_B =>
- 					left_acc <= left_acc(2*nbits-2 downto 0) & '0';
- 					right_acc <= '0' & right_acc(nbits-1 downto 1);
+ 					mul_left_acc <= mul_left_acc(2*nbits-2 downto 0) & '0';
+ 					mul_right_acc <= '0' & mul_right_acc(nbits-1 downto 1);
  
  					if cnt = nbits-1 
  					then 
@@ -278,24 +298,24 @@ begin
 					end if;
  				
  				when ALU_IMUL_FINISH => 
- 					mul_acc <= 0 - mul_acc;
+ 					mul_result_acc <= 0 - mul_result_acc;
  					state <= ALU_MUL_FINISH;
  
  				when ALU_MUL_FINISH => 
  					flags_o <= (others => '0');
- 					if mul_acc = (all_zeroes & all_zeroes)
+ 					if mul_result_acc = (all_zeroes & all_zeroes)
  					then 
  						flags_o.zero <= '1';
  					end if;
- 					if mul_acc(2*nbits-1 downto nbits) /= all_zeroes
+ 					if mul_result_acc(2*nbits-1 downto nbits) /= all_zeroes
  					then 
  						flags_o.overflow <= '1';
  					end if;
  					
  					flags_o.negative <= result_sign;
  
- 					result_h_o <= mul_acc(2*nbits-1 downto nbits);
- 					result_l_o <= mul_acc(nbits-1 downto 0);
+ 					result_h_o <= mul_result_acc(2*nbits-1 downto nbits);
+ 					result_l_o <= mul_result_acc(nbits-1 downto 0);
  					state <= IDLE;
  
  
@@ -305,19 +325,19 @@ begin
  
  					if left_h_i(nbits-1) = '1'
  					then 
- 						left_acc <= 0 - left_acc; 
+ 						div_left_acc <= 0 - div_left_acc; 
  					end if;
  					
  					if right_l_i(nbits-1) = '1'
  					then
- 						wide_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
+ 						div_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
  					end if;
  
  					state <= ALU_DIV_COMPUTE_A;
  
   				when ALU_DIV_COMPUTE_A =>
  				
- 					if left_acc >= wide_right_acc
+ 					if div_left_acc >= div_right_acc
  					then 
 						state <= ALU_DIV_COMPUTE_A_GE;
  					else 
@@ -325,16 +345,16 @@ begin
  					end if;
 
   				when ALU_DIV_COMPUTE_A_GE =>
-					left_acc <= left_acc - wide_right_acc;
-					div_acc <= div_acc(2*nbits-2 downto 0) & '1';
+					div_left_acc <= div_left_acc - div_right_acc;
+					div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '1';
 					state <= ALU_DIV_COMPUTE_B;
 
   				when ALU_DIV_COMPUTE_A_LE =>
-					div_acc <= div_acc(2*nbits-2 downto 0) & '0';
+					div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '0';
 					state <= ALU_DIV_COMPUTE_B;
  
   				when ALU_DIV_COMPUTE_B =>
- 					wide_right_acc <= '0' & wide_right_acc(2*nbits-1 downto 1);
+ 					div_right_acc <= '0' & div_right_acc(2*nbits-1 downto 1);
   
  					if cnt = nbits-1
  					then 
@@ -353,21 +373,21 @@ begin
 					end if;
  
   				when ALU_IDIV_FINISH =>
- 					div_acc <= 0 - div_acc;
- 					left_acc <= 0 - left_acc; -- note - this is probably incorrect!
+ 					div_result_acc <= 0 - div_result_acc;
+ 					div_left_acc <= 0 - div_left_acc; -- note - this is probably incorrect!
   					state <= ALU_DIV_FINISH;
   				
   				when ALU_DIV_FINISH =>
   					flags_o <= (others => '0');
-  					if left_acc > wide_right_acc
+  					if div_left_acc > div_right_acc
   					then 
   						flags_o.divide_by_zero <= '1';
   					end if;
  					
  					flags_o.negative <= result_sign;
   					
-  					result_l_o <= div_acc(nbits-1 downto 0);
-  					result_h_o <= left_acc(nbits-1 downto 0);
+  					result_l_o <= div_result_acc(nbits-1 downto 0);
+  					result_h_o <= div_left_acc(nbits-1 downto 0);
   					state <= IDLE;
  				
 			end case;
