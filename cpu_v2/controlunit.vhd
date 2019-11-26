@@ -116,6 +116,8 @@ begin
 			read_select_o	<= DS_MEMORY;
 			write_select_o	<= DS_MEMORY;
 			vga_write_enable_o <= '0';
+			
+			alu_operation_o <= ALU_NOP; -- make sure to reset it unless particular state wants different one
 
 			case cpu_state is
 				when STOP => 
@@ -342,38 +344,27 @@ begin
 
 
 				when WAIT_AND_STORE_WIDE_ALU_1 => 
-					cpu_state <= WAIT_AND_STORE_WIDE_ALU_2;
-					
-				when WAIT_AND_STORE_WIDE_ALU_2 => 
 					if alu_ready_i = '1' 
 					then 
 						regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
 						flags <= alu_flags_i;
-						alu_operation_o <= ALU_NOP;
-						cpu_state <= WAIT_AND_STORE_WIDE_ALU_3;
+						cpu_state <= WAIT_AND_STORE_WIDE_ALU_1;
 					end if;
 					
-				when WAIT_AND_STORE_WIDE_ALU_3 =>
+				when WAIT_AND_STORE_WIDE_ALU_2 =>
 					regfile(conv_integer(instruction_register(7 downto 4) xor "0001" )) <= alu_result_h_i;
 					cpu_state <= FETCH_0;
 
 				when WAIT_AND_STORE_ALU_1 =>	
-					cpu_state <= WAIT_AND_STORE_ALU_2;
-
-				when WAIT_AND_STORE_ALU_2 =>
 					if alu_ready_i = '1' 
 					then
 						regfile(conv_integer(instruction_register(7 downto 4))) <= alu_result_l_i;
 						flags <= alu_flags_i;
-						alu_operation_o <= ALU_NOP;
 						cpu_state <= FETCH_0;
 					end if;
 
 
 				when EXECUTE_7SEG_1 => 
-					cpu_state <= EXECUTE_7SEG_2;
-					
-				when EXECUTE_7SEG_2 => 
 					if alu_ready_i = '1' 
 					then
 						case alu_result_l_i(3 downto 0) is 
@@ -395,7 +386,6 @@ begin
 							when "1111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010001110";								 
 							when others => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000000010";
 						end case;
-						alu_operation_o <= ALU_NOP;
 						cpu_state <= FETCH_0;
 					end if;
 

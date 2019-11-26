@@ -76,10 +76,7 @@ architecture behaviour of ALU is
 	signal result_sign			: std_logic; -- sign of the result
 
 begin
-	-- output multiplexing.. 
-	
-	ready_o <= '1' when state = IDLE else '0'; 
-	
+	ready_o <= '1' when state = IDLE and operation_i = ALU_NOP else '0'; 
 
 	process (clk_i, rst_i)
 	

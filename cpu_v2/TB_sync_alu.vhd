@@ -19,7 +19,6 @@ ARCHITECTURE behavior OF TB_sync_alu IS
 			clk_i				: in std_logic;
 			rst_i				: in std_logic; 
 			operation_i			: in std_logic_vector(4 downto 0);
-			sync_select_i		: in std_logic; -- latched MSB of operation_i
 			left_h_i			: in std_logic_vector(nbits-1 downto 0);
 			left_l_i			: in std_logic_vector(nbits-1 downto 0);
 			right_l_i			: in std_logic_vector(nbits-1 downto 0);
@@ -27,40 +26,47 @@ ARCHITECTURE behavior OF TB_sync_alu IS
 			result_h_o			: out std_logic_vector(nbits-1 downto 0);
 			result_l_o			: out std_logic_vector(nbits-1 downto 0);
 			flags_o				: out ALU_flags;
-			sync_ready_o		: out std_logic
+			ready_o				: out std_logic
 		);
 	end component;
  
    -- Clock period definitions
 	constant clk_period : time := 10 ns; 
 
-   signal clk						: std_logic;
-	signal rst						: std_logic;
-	signal operation				: std_logic_vector(4 downto 0);
-	signal left_arg_high			: std_logic_vector(15 downto 0);
-	signal left_arg_low				: std_logic_vector(15 downto 0);
-	signal right_arg				: std_logic_vector(15 downto 0);
-	signal result_high				: std_logic_vector(15 downto 0);
-	signal result_low				: std_logic_vector(15 downto 0);
-	signal flags					: ALU_flags;
-	signal alu_ready				: std_logic;
+	signal clk			: std_logic;
+	signal rst			: std_logic;
+	signal op			: std_logic_vector(4 downto 0);
+	signal lh			: std_logic_vector(15 downto 0);
+	signal l			: std_logic_vector(15 downto 0);
+	signal r			: std_logic_vector(15 downto 0);
+	signal res_high		: std_logic_vector(15 downto 0);
+	signal exp_high 	: std_logic_vector(15 downto 0) := (others => '0');
+	signal res_low		: std_logic_vector(15 downto 0);
+	signal exp_low 		: std_logic_vector(15 downto 0) := (others => '0');
+	signal flags		: ALU_flags;
+	signal alu_ready	: std_logic;
+	
+	signal low_equals	: std_logic; 
+	signal high_equals 	: std_logic;
 
 begin
+
+	low_equals <= '1' when exp_low = res_low else '0';
+	high_equals <= '1' when exp_high = res_high else '0';
 
   -- Component Instantiation
     uut: ALU port map(
 		clk_i				=> clk,
 	    rst_i				=> rst,
-	    operation_i			=> operation,
-		 sync_select_i		=> '1',
-	    left_h_i			=> left_arg_high,
-	    left_l_i			=> left_arg_low,
-	    right_l_i			=> right_arg,
+	    operation_i			=> op,
+	    left_h_i			=> lh,
+	    left_l_i			=> l,
+	    right_l_i			=> r,
 	    carry_i				=> '0',
-	    result_h_o			=> result_high,
-	    result_l_o			=> result_low,
+	    result_h_o			=> res_high,
+	    result_l_o			=> res_low,
 	    flags_o				=> flags,
-	    sync_ready_o		=> alu_ready
+	    ready_o				=> alu_ready
 	);
 
 clock_process: 
@@ -78,94 +84,246 @@ tb:
 		rst <= '1';
 		wait for clk_period * 4;
 		rst <= '0';
+		lh <= x"0000"; 
+		
+		
+		-- various multiplication tests 
 	
-		operation <= ALU_MUL;
-		left_arg_high <= x"0000";
-		left_arg_low <= x"00CA";
-		right_arg <= x"0023";
+		-- unsigned mul: 0xcaca * 0x2323 = 0x1BD5579E 
+		op <= ALU_MUL; l <= x"CACA"; r <= x"2323"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"1BD5"; exp_low <= x"579E";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: 1B 9E
 
-		operation <= ALU_IMUL;
+		-- signed mul: 0xcaca * 0x2323 = 0xF8B2579E 
+		op <= ALU_IMUL; l <= x"CACA"; r <= x"2323"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"F8B2"; exp_low <= x"579E";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20; -- expected result: F8 9E
 
-		left_arg_low <= x"0023";
-		right_arg <= x"00CA";
-		operation <= ALU_IMUL;
+		-- unsigned mul: 0xcaca * 0xbaba = 0x93EA1AC4 
+		op <= ALU_MUL; l <= x"CACA"; r <= x"baba"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"93EA"; exp_low <= x"1AC4";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20; -- expected result: F8 9E
 
-
-		left_arg_low <= x"00FF";
-		right_arg <= x"00FF";
-		operation <= ALU_IMUL;
+		-- signed mul: 0xcaca * 0xbaba = 0x00EAB60C4 
+		op <= ALU_IMUL; l <= x"CACA"; r <= x"baba"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0E66"; exp_low <= x"1AC4";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20; -- expected result: 00 01 
 
 
-		left_arg_high <= x"0000";
-		left_arg_low <= x"00FF";
-		right_arg <= x"0003";
-		operation <= ALU_DIV;
+		-- unsigned mul: 0x0cac * 0x0bac = 0x0093E790 
+		op <= ALU_MUL; l <= x"0CAC"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0093"; exp_low <= x"E790";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: 55 on low, 0 on high
 
-		left_arg_high <= x"0000";
-		left_arg_low <= x"00FE";
-		right_arg <= x"0003";
-		operation <= ALU_DIV;
+		-- signed mul: 0x0cac * 0x0bac = 0x0093E790 
+		op <= ALU_IMUL;  l <= x"0CAC"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0093"; exp_low <= x"E790";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: 54 on low, 2 on high
+		
 
-		left_arg_high <= x"0000";
-		left_arg_low <= x"00FE";
-		right_arg <= x"0013";
-		operation <= ALU_DIV;
+		-- unsigned mul: 0x0000 * 0x0bac = 0x00000000 
+		op <= ALU_MUL; l <= x"0000"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: D on low, 7 on high
 
-
-		left_arg_high <= x"0004";
-		left_arg_low <= x"00FE";
-		right_arg <= x"0013";
-		operation <= ALU_DIV;
+		-- signed mul: 0x0000 * 0x0bac = 0x00000000 
+		op <= ALU_IMUL; l <= x"0000"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
+		
 
-		left_arg_high <= x"00FF";
-		left_arg_low <= x"00FE";
-		right_arg <= x"0013";
-		operation <= ALU_DIV;
+		-- unsigned mul: 0x0001 * 0x5bac = 0x00005bac 
+		op <= ALU_MUL; l <= x"0001"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0bac";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: divide by zero error
 
-		left_arg_high <= x"0004";
-		left_arg_low <= x"00FE";
-		right_arg <= x"0013";
-		operation <= ALU_DIV;
+		-- signed mul: 0x0001 * 0x5bac = 0x00005bac 
+		op <= ALU_IMUL; l <= x"0001"; r <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0bac";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: 43 on low, 5 on high
+		
 
-		left_arg_high <= x"0000";
-		left_arg_low <= x"0001";
-		right_arg <= x"0000";
-		operation <= ALU_DIV;
+		-- unsigned mul: 0xFFFF * 0x5bac = 0x5BABA454 
+		op <= ALU_MUL; l <= x"FFFF"; r <= x"5bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"5BAB"; exp_low <= x"A454";
 		wait for clk_period;
-		operation <= ALU_NOP;
-		wait for clk_period*20;  -- expected result: divide by zero error
+
+		-- signed mul: 0xFFFF * 0x5bac = 0x FFFF A454 
+		op <= ALU_IMUL; l <= x"FFFF"; r <= x"5bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"FFFF"; exp_low <= x"A454";
+		wait for clk_period;
+
+		
+		-- All the same as before, but arguments swapped in places 
+
+		-- unsigned mul: 0xcaca * 0x2323 = 0x1BD5579E 
+		op <= ALU_MUL; r <= x"CACA"; l <= x"2323"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"1BD5"; exp_low <= x"579E";
+		wait for clk_period;
+
+		-- signed mul: 0xcaca * 0x2323 = 0xF8B2579E 
+		op <= ALU_IMUL; r <= x"CACA"; l <= x"2323"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"F8B2"; exp_low <= x"579E";
+		wait for clk_period;
+
+		-- unsigned mul: 0xcaca * 0xbaba = 0x93EA1AC4 
+		op <= ALU_MUL; r <= x"CACA"; l <= x"baba"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"93EA"; exp_low <= x"1AC4";
+		wait for clk_period;
+
+		-- signed mul: 0xcaca * 0xbaba = 0x00EAB60C4 
+		op <= ALU_IMUL; r <= x"CACA"; l <= x"baba"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0E66"; exp_low <= x"1AC4";
+		wait for clk_period;
 
 
-		wait for clk_period * 100; -- will wait forever
+		-- unsigned mul: 0x0cac * 0x0bac = 0x0093E790 
+		op <= ALU_MUL; r <= x"0CAC"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0093"; exp_low <= x"E790";
+		wait for clk_period;
+
+		-- signed mul: 0x0cac * 0x0bac = 0x0093E790 
+		op <= ALU_IMUL;  r <= x"0CAC"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0093"; exp_low <= x"E790";
+		wait for clk_period;
+		
+
+		-- unsigned mul: 0x0000 * 0x0bac = 0x00000000 
+		op <= ALU_MUL; r <= x"0000"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
+		wait for clk_period;
+
+		-- signed mul: 0x0000 * 0x0bac = 0x00000000 
+		op <= ALU_IMUL; r <= x"0000"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
+		wait for clk_period;
+		
+
+		-- unsigned mul: 0x0001 * 0x5bac = 0x00005bac 
+		op <= ALU_MUL; r <= x"0001"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0bac";
+		wait for clk_period;
+
+		-- signed mul: 0x0001 * 0x5bac = 0x00005bac 
+		op <= ALU_IMUL; r <= x"0001"; l <= x"0bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0bac";
+		wait for clk_period;
+		
+
+		-- unsigned mul: 0xFFFF * 0x5bac = 0x5BABA454 
+		op <= ALU_MUL; r <= x"FFFF"; l <= x"5bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"5BAB"; exp_low <= x"A454";
+		wait for clk_period;
+
+		-- signed mul: 0xFFFF * 0x5bac = 0x FFFF A454 
+		op <= ALU_IMUL; r <= x"FFFF"; l <= x"5bac"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"FFFF"; exp_low <= x"A454";
+		wait for clk_period;
+
+
+		-- last one for muls .. 
+
+		-- unsigned mul: 0xFFFF * 0xFFFF = 0xFFFE0001 
+		op <= ALU_MUL; r <= x"FFFF"; l <= x"FFFF"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"FFFE"; exp_low <= x"0001";
+		wait for clk_period;
+
+		-- signed mul: 0xFFFF * 0xFFFF = 0x00000001 
+		op <= ALU_IMUL; r <= x"FFFF"; l <= x"FFFF"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0001";
+		wait for clk_period;
+
+
+		-- unsigned mul: 0x0000 * 0x0000 = 0x00000000 
+		op <= ALU_MUL; r <= x"0000"; l <= x"0000"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
+		wait for clk_period;
+
+		-- signed mul: 0x0000 * 0x0000 = 0x00000000 
+		op <= ALU_IMUL; r <= x"0000"; l <= x"0000"; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"0000"; exp_low <= x"0000";
+		wait for clk_period;
+	
+
+		-- DIVS 
+		-- DIVS 
+		-- DIVS 
+		-- DIVS 
+		
+		wait for 13 * clk_period;
+	
+
+
+		lh <= x"0000"; l <= x"00FF"; r <= x"0003"; op <= ALU_DIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1';
+		exp_high <= x"0000"; exp_low <= x"0055";
+		wait for clk_period;
+
+		lh <= x"0000"; l <= x"00FE"; r <= x"0003"; op <= ALU_DIV;
+		wait for clk_period; op <= ALU_NOP; wait until alu_ready = '1';
+		exp_high <= x"0002"; exp_low <= x"0054";
+		wait for clk_period;
+
+		lh <= x"1234"; l <= x"5678"; r <= x"3313"; op <= ALU_DIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"03CB"; exp_low <= x"5B3F";
+		wait for clk_period;
+
+		lh <= x"1234"; l <= x"5678"; r <= x"3313"; op <= ALU_IDIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"03CB"; exp_low <= x"5B3F";
+		wait for clk_period;
+
+
+		lh <= x"EDCB"; l <= x"A988"; r <= x"3313"; op <= ALU_IDIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"FC35"; exp_low <= x"A4C1";
+		wait for clk_period;
+
+
+		lh <= x"00FF"; l <= x"00FE"; r <= x"0013"; op <= ALU_DIV; wait for clk_period; 
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= (others => 'X'); exp_low <= (others => 'X');
+		wait for clk_period;
+
+		lh <= x"EDCB"; l <= x"A988"; r <= x"3313"; op <= ALU_IDIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1'; 
+		exp_high <= x"FC35"; exp_low <= x"A4C1";
+		wait for clk_period;
+
+		lh <= x"0000"; l <= x"0001"; r <= x"0000"; op <= ALU_DIV; wait for clk_period;
+		op <= ALU_NOP; wait until alu_ready = '1';  -- expected result: divide by zero error
+		exp_high <= (others => 'X'); exp_low <= (others => 'X');
+		wait for clk_period;
+
+		wait;		-- will wait forever
     end process tb;
 end;
