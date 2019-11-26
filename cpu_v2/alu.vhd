@@ -3,6 +3,8 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_unsigned.all;
 use ieee.numeric_std.all;
 
+----------------------------------------------
+
 use work.opcodes.all;
 use work.types.all;
 
@@ -41,19 +43,11 @@ architecture behaviour of ALU is
 		
 		ALU_SIMPL_FINISH, -- store result of simmple operations 
 
-		ALU_IMUL_PREPARE, 
-		ALU_MUL_COMPUTE_A,
-		ALU_MUL_COMPUTE_B,
-		ALU_MUL_DONE,
+		ALU_MUL_COMPUTE,
 		ALU_MUL_FINISH, 
 		ALU_IMUL_FINISH,
 
-		ALU_IDIV_PREPARE,
-		ALU_DIV_COMPUTE_A,
-		ALU_DIV_COMPUTE_A_GE,
-		ALU_DIV_COMPUTE_A_LE,
-		ALU_DIV_COMPUTE_B,
-		ALU_DIV_DONE,
+		ALU_DIV_COMPUTE,
 		ALU_DIV_FINISH, 
 		ALU_IDIV_FINISH
 	);
@@ -177,33 +171,70 @@ begin
 							state <= ALU_SIMPL_FINISH;
 
 
-						when ALU_MUL | ALU_IMUL =>	
+						when ALU_MUL => 
 							mul_result_acc <= (others => '0'); 
-							mul_left_acc <= all_zeroes & left_l_i;
+							mul_left_acc(2*nbits-1 downto nbits) <= (others => '0');
+							mul_left_acc(nbits-1 downto 0) <= left_l_i;
+							-- mul_left_acc <= all_zeroes & left_l_i;
 							mul_right_acc <= right_l_i;
 							cnt <= 0;
 							result_sign <= '0';
+							state <= ALU_MUL_COMPUTE;
+
+						when ALU_IMUL =>	
+
+							mul_result_acc <= (others => '0'); 
 							
-							if operation_i = ALU_IMUL
+							mul_left_acc(2*nbits-1 downto nbits) <= (others => '0');
+							
+							if left_l_i(nbits-1) = '1' 	-- negative number 
 							then 
-								state <= ALU_IMUL_PREPARE;
+								mul_left_acc(nbits-1 downto 0) <= 0 - left_l_i;
+							else 
+								mul_left_acc(nbits-1 downto 0) <= left_l_i;
+							end if;
+
+							if right_l_i(nbits-1) = '1' 	-- negative number 
+							then 
+								mul_right_acc <= 0 - right_l_i;
 							else
-								state <= ALU_MUL_COMPUTE_A;
+								mul_right_acc <= right_l_i;
 							end if;
 							
- 						when ALU_DIV | ALU_IDIV =>	 
+							cnt <= 0;
+							
+							result_sign <= left_l_i(nbits-1) xor right_l_i(nbits-1);
+							
+							state <= ALU_MUL_COMPUTE;
+							
+ 						when ALU_DIV  =>	 
  							div_left_acc <= left_h_i & left_l_i;
  							div_right_acc <= '0' & right_l_i & one_less_zero;
  							mul_result_acc <= (others => '0');
 							cnt <= 0;
 							result_sign <= '0';
+							state <= ALU_DIV_COMPUTE;
 
-							if operation_i = ALU_IDIV
+ 						when ALU_IDIV =>
+							if left_h_i(nbits-1) = '1'
 							then 
-								state <= ALU_IDIV_PREPARE;
-							else
-								state <= ALU_DIV_COMPUTE_A;
+								div_left_acc <= 0 - (left_h_i & left_l_i); -- a heavy 32-bit one.... 
+ 							else 
+								div_left_acc <= left_h_i & left_l_i;
 							end if;
+
+							if right_l_i(nbits-1) = '1'
+							then
+								div_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
+							else 
+								div_right_acc <= '0' & right_l_i & one_less_zero;
+							end if;
+
+ 							mul_result_acc <= (others => '0');
+							cnt <= 0;
+							result_sign <= left_h_i(nbits-1) xor right_l_i(nbits-1);
+		 
+							state <= ALU_DIV_COMPUTE;
 
 						when others	=> 
 							state <= IDLE;
@@ -248,51 +279,27 @@ begin
 					state <= IDLE;
 
 
- 				when ALU_IMUL_PREPARE => 
-  					result_sign <= mul_left_acc(nbits-1) xor mul_right_acc(nbits-1);
-  					
-  					if mul_left_acc(nbits-1) = '1' 	-- negative number 
-  					then 
-  						mul_left_acc <= all_zeroes & (0 - left_l_i);
-  					end if;
-  
-  					if mul_right_acc(nbits-1) = '1' 	-- negative number 
-  					then 
-  						mul_right_acc <= 0 - mul_right_acc;
-  					end if;
- 
- 					state <= ALU_MUL_COMPUTE_A;
- 							
- 				when ALU_MUL_COMPUTE_A => 
+ 				when ALU_MUL_COMPUTE => 
 
  					if mul_right_acc(0) /= '0' 
  					then 
  						mul_result_acc <= mul_result_acc + mul_left_acc;
  					end if;
  
-					state <= ALU_MUL_COMPUTE_B;
-	
-					
- 				when ALU_MUL_COMPUTE_B =>
  					mul_left_acc <= mul_left_acc(2*nbits-2 downto 0) & '0';
  					mul_right_acc <= '0' & mul_right_acc(nbits-1 downto 1);
  
  					if cnt = nbits-1 
  					then 
-						state <= ALU_MUL_DONE;
-					else 
-						state <= ALU_MUL_COMPUTE_A;
- 					end if;
+						if result_sign = '1'
+						then 
+							state <= ALU_IMUL_FINISH;
+						else 
+							state <= ALU_MUL_FINISH;
+						end if;
+					end if;
 
  					cnt <= cnt + 1;
-					
-				when ALU_MUL_DONE => 
-					if result_sign = '1'
-					then 
-						state <= ALU_IMUL_FINISH;
-					else 
-						state <= ALU_MUL_FINISH;
-					end if;
  				
  				when ALU_IMUL_FINISH => 
  					mul_result_acc <= 0 - mul_result_acc;
@@ -315,59 +322,29 @@ begin
  					result_l_o <= mul_result_acc(nbits-1 downto 0);
  					state <= IDLE;
  
- 
- 				when ALU_IDIV_PREPARE => 
- 					
- 					result_sign <= left_h_i(nbits-1) xor right_l_i(nbits-1);
- 
- 					if left_h_i(nbits-1) = '1'
- 					then 
- 						div_left_acc <= 0 - div_left_acc; 
- 					end if;
- 					
- 					if right_l_i(nbits-1) = '1'
- 					then
- 						div_right_acc <= '0' & (0 - right_l_i) & one_less_zero;
- 					end if;
- 
- 					state <= ALU_DIV_COMPUTE_A;
- 
-  				when ALU_DIV_COMPUTE_A =>
- 				
+
+  				when ALU_DIV_COMPUTE =>
  					if div_left_acc >= div_right_acc
  					then 
-						state <= ALU_DIV_COMPUTE_A_GE;
- 					else 
-						state <= ALU_DIV_COMPUTE_A_LE;
+						div_left_acc <= div_left_acc - div_right_acc;
+						div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '1';
+					else 
+						div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '0';
  					end if;
 
-  				when ALU_DIV_COMPUTE_A_GE =>
-					div_left_acc <= div_left_acc - div_right_acc;
-					div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '1';
-					state <= ALU_DIV_COMPUTE_B;
 
-  				when ALU_DIV_COMPUTE_A_LE =>
-					div_result_acc <= div_result_acc(2*nbits-2 downto 0) & '0';
-					state <= ALU_DIV_COMPUTE_B;
- 
-  				when ALU_DIV_COMPUTE_B =>
  					div_right_acc <= '0' & div_right_acc(2*nbits-1 downto 1);
   
  					if cnt = nbits-1
  					then 
-						state <= ALU_DIV_DONE;
-					else 
-						state <= ALU_DIV_COMPUTE_A;
+						if result_sign = '1'
+						then 
+							state <= ALU_IDIV_FINISH;
+						else 
+							state <= ALU_DIV_FINISH;
+						end if;
  					end if;
  					cnt <= cnt + 1;
-
-				when ALU_DIV_DONE => 
-					if result_sign = '1'
-					then 
-						state <= ALU_IDIV_FINISH;
-					else 
-						state <= ALU_DIV_FINISH;
-					end if;
  
   				when ALU_IDIV_FINISH =>
  					div_result_acc <= 0 - div_result_acc;
