@@ -41,7 +41,8 @@ architecture behavioral of vga is
 	signal video_clr_memory	: screen_mem_type := (others => x"ff");
 		
 	attribute ram_style: string;
-	attribute ram_style of video_memory : signal is "block";
+	attribute ram_style of video_chr_memory : signal is "block";
+	attribute ram_style of video_clr_memory : signal is "block";
 
 
 	-- Set the resolution of screen
@@ -94,9 +95,9 @@ chr_rw_process:
 				video_chr_memory(to_integer(unsigned(vram_addr_cut))) <= vram_data_i;
 				chr_vram_ext_read <= vram_data_i;
 			end if;
-			chr_vram_ext_read <= video_chr_memory(to_integer(unsigned(addr_cut)));
+			chr_vram_ext_read <= video_chr_memory(to_integer(unsigned(vram_addr_cut)));
 		end if;
-	end;
+	end process;
 
 clr_rw_process: 
 	process (clk_i)
@@ -108,9 +109,9 @@ clr_rw_process:
 				video_clr_memory(to_integer(unsigned(vram_addr_cut))) <= vram_data_i;
 				clr_vram_ext_read <= vram_data_i;
 			end if;
-			clr_vram_ext_read <= video_clr_memory(to_integer(unsigned(addr_cut)));
+			clr_vram_ext_read <= video_clr_memory(to_integer(unsigned(vram_addr_cut)));
 		end if;
-	end;
+	end process;
 	
 	vram_data_o <= chr_vram_ext_read when vram_address_i(0) = '1' else clr_vram_ext_read;
 

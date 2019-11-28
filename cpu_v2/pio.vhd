@@ -87,11 +87,11 @@ begin
 						 
 					 elsif read_enable_i = '1' then 
 						 case port_address_i(7 downto 0) is 
-							 when "00000000" => data_o <= "00000000" & gpio_0_i;
-							 when "00000001" => data_o <= "00000000" & gpio_1_i;
-							 when "00000010" => data_o <= "00000000" & gpio_2_i;
-							 when "00000011" => data_o <= "00000000" & gpio_3_i;
-							 when others	 => data_o <= "0000000000000000";
+							 when "00000000" => data_o <= gpio_0_i;
+							 when "00000001" => data_o <= gpio_1_i;
+							 when "00000010" => data_o <= gpio_2_i;
+							 when "00000011" => data_o <= gpio_3_i;
+							 when others	 => data_o <= "00000000";
 						 end case;
 						 
 						 state <= IO_BUSY;

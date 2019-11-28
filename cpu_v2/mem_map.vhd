@@ -6,7 +6,7 @@ use work.opcodes.all;
 
 entity mem_map is
 	generic (
-		video_ram_pattern : std_logic_vector(19 downto 15) = "10111"  -- B8000 is the base for the video memory in text mode 
+		video_ram_pattern : std_logic_vector(19 downto 15) := "10111"  -- B8000 is the base for the video memory in text mode 
 	);
 	port
 	(
@@ -14,7 +14,7 @@ entity mem_map is
 		address_i		: in std_logic_vector(19 downto 0);
 		data_i			: in std_logic_vector(7 downto 0); 
 		data_o			: out std_logic_vector(7 downto 0);
-		write_i			: in std_logic 
+		write_i			: in std_logic;
 
 		-- connecto this one to the main memory 
 		mem_address_o	: out std_logic_vector(19 downto 0);

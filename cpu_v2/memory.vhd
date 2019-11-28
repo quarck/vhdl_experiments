@@ -49,28 +49,11 @@ architecture rtl of memory is
 		OP_MOVE_RR, R1 & R3,	 
 		OP_MOVE_RR, R2 & R4, 
 		OP_MOVE_RR, R3 & R5, 
-
-		-- now - display the thing	
-		OP_LDC & R15, x"00",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
-		OP_SEVENSEGTRANSLATE, R15 & x"0",
-		OP_OUT_GROUP & R15, x"05",
-		OP_LDC & R15, x"01",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R4,
-		OP_SEVENSEGTRANSLATE, R15 & x"4",
-		OP_OUT_GROUP & R15, x"05",
-		OP_LDC & R15, x"02",
-		OP_OUT_GROUP & R15, x"06",
-		OP_MOVE_RR, R15 & R5,
-		OP_SEVENSEGTRANSLATE, R15 & x"0",
-		OP_OUT_GROUP & R15, x"05",
 	
 
-		OP_JMP_A_UNCOND &	x"16",		-- go loop in all other cases	  
+		OP_JMP_A_UNCOND,	x"16",		-- go loop in all other cases	  
 
-		others => x"0000"
+		others => x"00"
 	);
 	
 	attribute ram_style: string;

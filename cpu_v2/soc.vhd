@@ -57,7 +57,7 @@ architecture structural of soc is
 	
 	component mem_map is
 		generic (
-			video_ram_pattern : std_logic_vector(19 downto 15) = "10111"  -- B8000 is the base for the video memory in text mode 
+			video_ram_pattern : std_logic_vector(19 downto 15) := "10111"  -- B8000 is the base for the video memory in text mode 
 		);
 		port
 		(
@@ -65,7 +65,7 @@ architecture structural of soc is
 			address_i		: in std_logic_vector(19 downto 0);
 			data_i			: in std_logic_vector(7 downto 0); 
 			data_o			: out std_logic_vector(7 downto 0);
-			write_i			: in std_logic 
+			write_i			: in std_logic;
 
 			-- connecto this one to the main memory 
 			mem_address_o	: out std_logic_vector(19 downto 0);
@@ -165,7 +165,6 @@ architecture structural of soc is
 	signal out_port_4 		: std_logic_vector (7 downto 0); -- individual leds
 	signal out_port_6 		: std_logic_vector (7 downto 0); -- 7-segment enable signals 
 
-	signal mem_read_enable 	: std_logic;
 	signal mem_write_enable	: std_logic;
 	signal pio_read_enable	: std_logic;
 	signal pio_write_enable	: std_logic;
@@ -184,7 +183,6 @@ architecture structural of soc is
 
 begin 
 
-	mem_read_enable <= '1' when read_enable = '1' and read_select = DS_MEMORY else '0';
 	mem_write_enable <= '1' when write_enable = '1' and write_select = DS_MEMORY else '0';
 	pio_read_enable <= '1' when read_enable = '1' and read_select = DS_PIO else '0';
 	pio_write_enable <= '1' when write_enable = '1' and write_select = DS_PIO else '0';
