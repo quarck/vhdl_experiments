@@ -9,18 +9,18 @@ entity vga is
 	port(
 		clk_i			: in std_logic;
 		
-		pos_x_i			: in std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-		pos_y_i			: in std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-		chr_i			: in std_logic_vector(7 downto 0); 
-		clr_i			: in std_logic_vector(7 downto 0); 
-		write_enable_i	: in std_logic;
-
 		hsync_o			: out std_logic;
 		vsync_o			: out std_logic;
 	
 		red_o			: out std_logic_vector(2 downto 0);
 		green_o			: out std_logic_vector(2 downto 0);
-		blue_o			: out std_logic_vector(2 downto 1)
+		blue_o			: out std_logic_vector(2 downto 1);
+
+		-- video memory access from the CPU 
+		vram_address_i	: in std_logic_vector(14 downto 0);
+		vram_data_i		: in std_logic_vector(7 downto 0); 
+		vram_data_o		: out std_logic_vector(7 downto 0);
+		vram_write_i	: in std_logic
 	);
 end vga;
 
@@ -36,13 +36,13 @@ architecture behavioral of vga is
 	end component;
 
 
-	-- 8-bits of color followed by 8 bits of chr
-	type screen_mem_type is array (0 to 80*30) of std_logic_vector(15 downto 0);
-
-	signal video_memory	: screen_mem_type := (others => x"ff00");
+	type screen_mem_type is array (0 to 4095) of std_logic_vector(7 downto 0);
+	signal video_chr_memory	: screen_mem_type := (others => x"00");
+	signal video_clr_memory	: screen_mem_type := (others => x"ff");
 		
 	attribute ram_style: string;
 	attribute ram_style of video_memory : signal is "block";
+
 
 	-- Set the resolution of screen
 	signal pixel_x		 : integer range 0 to 1023 := 640;
@@ -59,10 +59,14 @@ architecture behavioral of vga is
 	signal gen_x : integer range 0 to 7 := 0;
 	signal gen_y : integer range 0 to 15 := 0;
 
-	signal clr_chr : std_logic_vector(15 downto 0);
+	signal clr : std_logic_vector(7 downto 0);
+	signal chr : std_logic_vector(7 downto 0);
 
 	signal chrg_line: std_logic_vector(0 to 7);
 	
+	signal chr_vram_ext_read : std_logic_vector(7 downto 0);
+	signal clr_vram_ext_read : std_logic_vector(7 downto 0);
+	signal vram_addr_cut : std_logic_vector(12 downto 0);
 	
 begin
 	chr_x <= next_pixel_x / 8;
@@ -73,32 +77,43 @@ begin
 
 	rom: vga_chrg_rom port map(
 		clk_i	=> clk_i,
-		chr_i	=> clr_chr(6 downto 0), 
+		chr_i	=> chr(6 downto 0), 
 		gen_y_i	=> gen_y,
 		line_o	=> chrg_line
 	);
 	
-write_process: 
+	vram_addr_cut <= vram_address_i(13 downto 1);
+	
+chr_rw_process: 
 	process (clk_i)
-		variable offset : integer range 0 to 80 * 40;
-		variable x 	: integer range 0 to 127;
-		variable y 	: integer range 0 to 31;
 	begin
 		if rising_edge(clk_i)
-		then 
-			if write_enable_i = '1'
-			then
-				x := to_integer(unsigned(pos_x_i));
-				y := to_integer(unsigned(pos_y_i)); 
-				
-				if x <= 80 and y <= 30 
-				then 
-					offset := 64 * y + 16 * y + x;
-					video_memory(offset) <= clr_i & chr_i;
-				end if;			
+		then
+			if vram_write_i = '1' and vram_address_i(0) = '1' 
+			then 
+				video_chr_memory(to_integer(unsigned(vram_addr_cut))) <= vram_data_i;
+				chr_vram_ext_read <= vram_data_i;
 			end if;
-		end if;		
-	end process;
+			chr_vram_ext_read <= video_chr_memory(to_integer(unsigned(addr_cut)));
+		end if;
+	end;
+
+clr_rw_process: 
+	process (clk_i)
+	begin
+		if rising_edge(clk_i)
+		then
+			if vram_write_i = '1' and vram_address_i(0) = '0' 
+			then 
+				video_clr_memory(to_integer(unsigned(vram_addr_cut))) <= vram_data_i;
+				clr_vram_ext_read <= vram_data_i;
+			end if;
+			clr_vram_ext_read <= video_clr_memory(to_integer(unsigned(addr_cut)));
+		end if;
+	end;
+	
+	vram_data_o <= chr_vram_ext_read when vram_address_i(0) = '1' else clr_vram_ext_read;
+
 	
 generate_signal: 
 	process (clk_i)
@@ -136,9 +151,11 @@ generate_signal:
 				when "01" => 
 					if chr_x < 80 and chr_y < 30 
 					then 
-						clr_chr <= video_memory(vram_line_base + chr_x);
+						chr <= video_chr_memory(vram_line_base + chr_x);
+						clr <= video_clr_memory(vram_line_base + chr_x);
 					else 
-						clr_chr <= (others => '0');
+						chr <= (others => '0');
+						clr <= (others => '0');
 					end if;
 				
 				when "10" => 
@@ -150,7 +167,7 @@ generate_signal:
 				
 					if chrg_line(gen_x) = '1' 
 					then 
-						rgb := clr_chr(15 downto 8);
+						rgb := clr;
 					else 
 						rgb := x"00";
 					end if;

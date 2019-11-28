@@ -46,9 +46,9 @@ package opcodes is
 	-- constant definition for various CPU instructions 
 		
 	-- load/store instructions, lower 4 bits indicate the register, second byte - addr or value
-	constant OP_ST			: std_logic_vector(3 downto 0) := "0001";  -- mem[arg] = reg[A]
-	constant OP_LD			: std_logic_vector(3 downto 0) := "0010";  -- reg[A] = mem[arg]
 	constant OP_LDC			: std_logic_vector(3 downto 0) := "0011";  -- reg[A] = arg
+	constant OP_LD			: std_logic_vector(3 downto 0) := "0010";  -- reg[A] = mem[reg[a0]:reg[a1]]
+	constant OP_ST			: std_logic_vector(3 downto 0) := "0001";  -- mem[reg[a0]:reg[a1]] = reg[A]
 	
 	-- Async ALU reg-reg instructions, lower 4 bits - op, second byte - reg-reg 
 	constant OP_ALU_RR		: std_logic_vector(2 downto 0) := "010"; 
@@ -182,10 +182,7 @@ package opcodes is
 	
 	constant OP_HLT					: std_logic_vector(7 downto 0) := "00000000";
 	constant OP_NOP					: std_logic_vector(7 downto 0) := "00000001";
-	constant OP_SEVENSEGTRANSLATE	: std_logic_vector(7 downto 0) := "00000010";
-	
-	constant OP_SETXY			  : std_logic_vector(7 downto 0) := "00000011";
-	constant OP_SETC			  : std_logic_vector(7 downto 0) := "00000100";
+
 
 	constant OP_WAIT			  : std_logic_vector(7 downto 0) := "00000101";
 	

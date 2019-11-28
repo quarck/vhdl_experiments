@@ -11,11 +11,11 @@ entity cpu is
 		error_o					: out std_logic;
 		
 		-- address bus - multiplexed between memory and PIO 
-		address_o				: out std_logic_vector(15 downto 0);
+		address_o				: out std_logic_vector(19 downto 0);
 		
 		-- data buses - multiplexed between port and memory 
-		data_i					: in std_logic_vector(15 downto 0);
-		data_o					: out std_logic_vector(15 downto 0);
+		data_i					: in std_logic_vector(7 downto 0);
+		data_o					: out std_logic_vector(7 downto 0);
 
 		-- read/write controls for both memory and PIO
 		read_enable_o			: out std_logic;
@@ -23,17 +23,7 @@ entity cpu is
 		write_enable_o			: out std_logic;
 		write_select_o			: out data_select;
 
-		pio_io_ready_i			: in std_logic;
-
-		-- direct access to the video adapter 
-		-- todo - remove this later in favour of using I/O ports 
-		-- (even if we use dedicated opcodes for VGA, we can just use particular 
-		-- port numbers for these 
-		vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-		vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-		vga_chr_o				: out std_logic_vector(7 downto 0); 
-		vga_clr_o				: out std_logic_vector(7 downto 0); 
-		vga_write_enable_o		: out std_logic
+		pio_io_ready_i			: in std_logic
 	);
 end cpu;
 
@@ -47,11 +37,11 @@ architecture structural of cpu is
 			error_o					: out std_logic;
 			
 			-- address bus - multiplexed between memory and PIO 
-			address_o				: out std_logic_vector(15 downto 0);
+			address_o				: out std_logic_vector(19 downto 0);
 			
 			-- data buses - multiplexed between port and memory 
-			data_i					: in std_logic_vector(15 downto 0);
-			data_o					: out std_logic_vector(15 downto 0);
+			data_i					: in std_logic_vector(7 downto 0);
+			data_o					: out std_logic_vector(7 downto 0);
 
 			-- read/write controls for both memory and PIO
 			read_enable_o			: out std_logic;
@@ -60,7 +50,7 @@ architecture structural of cpu is
 			write_select_o			: out data_select;
 
 			pio_io_ready_i			: in std_logic;
-
+		
 			alu_operation_o			: out std_logic_vector(4 downto 0);
 			alu_left_h_o			: out std_logic_vector(15 downto 0);
 			alu_left_l_o			: out std_logic_vector(15 downto 0);
@@ -70,16 +60,6 @@ architecture structural of cpu is
 			alu_result_l_i			: in std_logic_vector(15 downto 0);
 			alu_flags_i				: in ALU_flags;
 			alu_ready_i				: in std_logic;
-			
-			-- direct access to the video adapter 
-			-- todo - remove this later in favour of using I/O ports 
-			-- (even if we use dedicated opcodes for VGA, we can just use particular 
-			-- port numbers for these 
-			vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-			vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-			vga_chr_o				: out std_logic_vector(7 downto 0); 
-			vga_clr_o				: out std_logic_vector(7 downto 0); 
-			vga_write_enable_o		: out std_logic;
 
 			-- debug -- would be stripped out during synthesis 
 			dbg_state_o				: out cpu_state_type;
@@ -87,7 +67,7 @@ architecture structural of cpu is
 			dbg_f_o					: out ALU_flags := (others => '0');
 			dbg_ir_o				: out std_logic_vector(15 downto 0)		  
 		);
-	end component;	
+	end component;
 	
 	component ALU is
 		generic (
@@ -149,13 +129,7 @@ begin
 		alu_result_h_i			=> alu_result_h,
 		alu_result_l_i			=> alu_result_l,
 		alu_flags_i				=> alu_flags,
-		alu_ready_i				=> alu_ready,
-
-		vga_pos_x_o				=> vga_pos_x_o,
-		vga_pos_y_o				=> vga_pos_y_o,
-		vga_chr_o				=> vga_chr_o,
-		vga_clr_o				=> vga_clr_o,
-		vga_write_enable_o		=> vga_write_enable_o, 
+		alu_ready_i				=> alu_ready, 
 		
 		dbg_state_o				=> open,
 		dbg_pc_o				=> open,

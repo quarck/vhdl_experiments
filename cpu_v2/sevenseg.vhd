@@ -3,6 +3,32 @@ use ieee.std_logic_1164.all ;
 use ieee.std_logic_unsigned.all ;
 use ieee.numeric_std.all;
 
+-- 				when EXECUTE_7SEG_1 => 
+-- 					if alu_ready_i = '1' 
+-- 					then
+-- 						case alu_result_l_i(3 downto 0) is 
+-- 							when "0000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111100";
+-- 							when "0001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100000";
+-- 							when "0010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011011010";
+-- 							when "0011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110010"; 
+-- 							when "0100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001100110";
+-- 							when "0101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010110110";
+-- 							when "0110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010111110";
+-- 							when "0111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011100000";
+-- 							when "1000" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011111110";
+-- 							when "1001" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011110110";
+-- 							when "1010" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000011101110";
+-- 							when "1011" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000111110";
+-- 							when "1100" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011100";
+-- 							when "1101" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000001111010";
+-- 							when "1110" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010011110";
+-- 							when "1111" => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000010001110";								 
+-- 							when others => regfile(conv_integer(instruction_register(7 downto 4))) <= "0000000000000010";
+-- 						end case;
+-- 						cpu_state <= FETCH_0;
+-- 					end if;
+-- 
+
 entity sevenseg is
 	generic (
 		num_segments: integer := 3	-- up to 8

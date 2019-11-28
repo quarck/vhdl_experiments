@@ -39,11 +39,11 @@ architecture structural of soc is
 			error_o					: out std_logic;
 			
 			-- address bus - multiplexed between memory and PIO 
-			address_o				: out std_logic_vector(15 downto 0);
+			address_o				: out std_logic_vector(19 downto 0);
 			
 			-- data buses - multiplexed between port and memory 
-			data_i					: in std_logic_vector(15 downto 0);
-			data_o					: out std_logic_vector(15 downto 0);
+			data_i					: in std_logic_vector(7 downto 0);
+			data_o					: out std_logic_vector(7 downto 0);
 
 			-- read/write controls for both memory and PIO
 			read_enable_o			: out std_logic;
@@ -51,31 +51,46 @@ architecture structural of soc is
 			write_enable_o			: out std_logic;
 			write_select_o			: out data_select;
 
-			pio_io_ready_i			: in std_logic;
+			pio_io_ready_i			: in std_logic
+		);
+	end component;
+	
+	component mem_map is
+		generic (
+			video_ram_pattern : std_logic_vector(19 downto 15) = "10111"  -- B8000 is the base for the video memory in text mode 
+		);
+		port
+		(
+			-- interface into the CPU
+			address_i		: in std_logic_vector(19 downto 0);
+			data_i			: in std_logic_vector(7 downto 0); 
+			data_o			: out std_logic_vector(7 downto 0);
+			write_i			: in std_logic 
 
-			-- direct access to the video adapter 
-			-- todo - remove this later in favour of using I/O ports 
-			-- (even if we use dedicated opcodes for VGA, we can just use particular 
-			-- port numbers for these 
-			vga_pos_x_o				: out std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-			vga_pos_y_o				: out std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-			vga_chr_o				: out std_logic_vector(7 downto 0); 
-			vga_clr_o				: out std_logic_vector(7 downto 0); 
-			vga_write_enable_o		: out std_logic
+			-- connecto this one to the main memory 
+			mem_address_o	: out std_logic_vector(19 downto 0);
+			mem_data_i		: in std_logic_vector(7 downto 0); 
+			mem_data_o		: out std_logic_vector(7 downto 0);
+			mem_write_o		: out std_logic;
+
+			-- connecto this one to the video memory 
+			vram_address_o	: out std_logic_vector(14 downto 0);
+			vram_data_i		: in std_logic_vector(7 downto 0); 
+			vram_data_o		: out std_logic_vector(7 downto 0);
+			vram_write_o	: out std_logic
 		);
 	end component;
 	
 	component memory is
 		generic (
-			mem_size : integer := 65535
+			mem_size : integer := 32*1024
 		);
 		port
 		(
 			clk_i			: in std_logic;
-			address_i		: in std_logic_vector(15 downto 0);
-			data_i			: in std_logic_vector(15 downto 0);
-			data_o			: out std_logic_vector(15 downto 0);
-			mem_read_i		: in std_logic;
+			address_i		: in std_logic_vector(19 downto 0);
+			data_i			: in std_logic_vector(7 downto 0);
+			data_o			: out std_logic_vector(7 downto 0);
 			mem_write_i		: in std_logic
 		);
 	end component;
@@ -86,8 +101,8 @@ architecture structural of soc is
 			rst_i			: in std_logic;
 			
 			port_address_i	: in std_logic_vector(15 downto 0);
-			data_i			: in std_logic_vector(15 downto 0); -- data entering IO port 
-			data_o			: out std_logic_vector(15 downto 0);
+			data_i			: in std_logic_vector(7 downto 0); -- data entering IO port 
+			data_o			: out std_logic_vector(7 downto 0);
 			write_enable_i	: in std_logic;
 			read_enable_i	: in std_logic;
 			io_ready_o		: out std_logic;
@@ -109,32 +124,33 @@ architecture structural of soc is
 		port(
 			clk_i			: in std_logic;
 			
-			pos_x_i			: in std_logic_vector(6 downto 0); -- 0-79 - enough 7 bits 
-			pos_y_i			: in std_logic_vector(4 downto 0); -- 0-29 - enough 5 bits
-			chr_i			: in std_logic_vector(7 downto 0); 
-			clr_i			: in std_logic_vector(7 downto 0); 
-			write_enable_i	: in std_logic;
-
 			hsync_o			: out std_logic;
 			vsync_o			: out std_logic;
 		
 			red_o			: out std_logic_vector(2 downto 0);
 			green_o			: out std_logic_vector(2 downto 0);
-			blue_o			: out std_logic_vector(2 downto 1)
+			blue_o			: out std_logic_vector(2 downto 1);
+
+			-- video memory access from the CPU 
+			vram_address_i	: in std_logic_vector(14 downto 0);
+			vram_data_i		: in std_logic_vector(7 downto 0); 
+			vram_data_o		: out std_logic_vector(7 downto 0);
+			vram_write_i	: in std_logic
 		);
 	end component;
+
 
 	signal reset			: std_logic;
 	signal error			: std_logic;
 
 	-- address bus - multiplexed between memory and PIO 
-	signal address				: std_logic_vector(15 downto 0);
+	signal address				: std_logic_vector(19 downto 0);
 	
 	-- data buses - multiplexed between port and memory 
-	signal data_i				: std_logic_vector(15 downto 0);
-	signal data_o				: std_logic_vector(15 downto 0);
-	signal mem_data_r			: std_logic_vector(15 downto 0);
-	signal pio_data_r			: std_logic_vector(15 downto 0);
+	signal data_i				: std_logic_vector(7 downto 0);
+	signal data_o				: std_logic_vector(7 downto 0);
+	signal mem_data_r			: std_logic_vector(7 downto 0);
+	signal pio_data_r			: std_logic_vector(7 downto 0);
 
 	-- read/write controls for both memory and PIO
 	signal read_enable			: std_logic;
@@ -145,31 +161,26 @@ architecture structural of soc is
 	signal pio_io_ready			: std_logic;
 
 
-	signal in_port_0 		: std_logic_vector (7 downto 0); -- dp switches 
 	signal in_port_1 		: std_logic_vector (7 downto 0);	-- push btns
-	signal in_port_2 		: std_logic_vector (7 downto 0); -- pin header 6
-	signal in_port_3 		: std_logic_vector (7 downto 0); -- pin header 7
-
 	signal out_port_4 		: std_logic_vector (7 downto 0); -- individual leds
-	signal out_port_5 		: std_logic_vector (7 downto 0); -- 7-segment digits 
 	signal out_port_6 		: std_logic_vector (7 downto 0); -- 7-segment enable signals 
-	signal out_port_7 		: std_logic_vector (7 downto 0); -- pin header 8
-	signal out_port_8 		: std_logic_vector (7 downto 0); -- pin header 9
-
-	signal v_red			: std_logic_vector(2 downto 0);
-	signal v_green	   		: std_logic_vector(2 downto 0);
-	signal v_blue			: std_logic_vector(2 downto 1);
-	
-	signal v_pos_x			: std_logic_vector(6 downto 0);
-	signal v_pos_y			: std_logic_vector(4 downto 0);
-	signal v_chr			: std_logic_vector(7 downto 0); 
-	signal v_clr			: std_logic_vector(7 downto 0); 
-	signal v_write_enable	: std_logic;
 
 	signal mem_read_enable 	: std_logic;
 	signal mem_write_enable	: std_logic;
 	signal pio_read_enable	: std_logic;
 	signal pio_write_enable	: std_logic;
+
+		-- connecto this one to the main memory 
+	signal ram_address		: std_logic_vector(19 downto 0);
+	signal ram_data_i		: std_logic_vector(7 downto 0); 
+	signal ram_data_o		: std_logic_vector(7 downto 0);
+	signal ram_write		: std_logic; 
+
+		-- connecto this one to the video memory 
+	signal vram_address		: std_logic_vector(14 downto 0);
+	signal vram_data_i		: std_logic_vector(7 downto 0); 
+	signal vram_data_o		: std_logic_vector(7 downto 0);
+	signal vram_write		: std_logic;
 
 begin 
 
@@ -198,69 +209,77 @@ begin
 		write_enable_o			=> write_enable,
 		write_select_o			=> write_select,
 
-		pio_io_ready_i			=> pio_io_ready,
-
-
-		-- direct access to the video adapter 
-		-- todo - remove this later in favour of using I/O ports 
-		-- (even if we use dedicated opcodes for VGA, we can just use particular 
-		-- port numbers for these 
-		vga_pos_x_o				=> v_pos_x,
-		vga_pos_y_o				=> v_pos_y,
-		vga_chr_o				=> v_chr,
-		vga_clr_o				=> v_clr,
-		vga_write_enable_o		=> v_write_enable
+		pio_io_ready_i			=> pio_io_ready
 	);
 
-	m: memory port map (
-		clk_i			=> sys_clk,
+	mm: mem_map port map (
+		-- interface into the CPU
 		address_i		=> address,
 		data_i			=> data_o,
 		data_o			=> mem_data_r,
-		mem_read_i		=> mem_read_enable,
-		mem_write_i		=> mem_write_enable
+		write_i			=> mem_write_enable,
+
+		-- connecto this one to the main memory 
+		mem_address_o	=> ram_address,
+		mem_data_i		=> ram_data_i,
+		mem_data_o		=> ram_data_o, 
+		mem_write_o		=> ram_write, 
+
+		-- connecto this one to the video memory 
+		vram_address_o	=> vram_address, 
+		vram_data_i		=> vram_data_i,
+		vram_data_o		=> vram_data_o,
+		vram_write_o	=> vram_write
 	);
-					
+
+	m: memory port map (
+ 		clk_i			=> sys_clk,
+ 		address_i		=> address,
+ 		data_i			=> ram_data_o,
+ 		data_o			=> ram_data_i,
+ 		mem_write_i		=> ram_write
+	);
+	
+	v: vga port map (
+		clk_i			=> sys_clk,
+		
+		hsync_o			=> HSync,
+		vsync_o			=> VSync,
+		red_o			=> Red,
+		green_o			=> Green,
+		blue_o			=> Blue, 
+		
+		-- video memory access from the CPU 
+		vram_address_i	=> vram_address,
+		vram_data_i		=> vram_data_o,
+		vram_data_o		=> vram_data_i,
+		vram_write_i	=> vram_write
+	);
+	 
 	p: pio port map (
 		clk_i					=> sys_clk,
 		rst_i					=> reset,
 			
-		port_address_i			=> address,
+		port_address_i			=> address(15 downto 0),
 		data_i					=> data_o,
 		data_o					=> pio_data_r,
 		write_enable_i			=> pio_write_enable,
 		read_enable_i			=> pio_read_enable,
 		io_ready_o				=> pio_io_ready,
 			
-		gpio_0_i				=> in_port_0,
+		gpio_0_i				=> DPSwitch,
 		gpio_1_i				=> in_port_1,
-		gpio_2_i				=> in_port_2,
-		gpio_3_i				=> in_port_3,
+		gpio_2_i				=> IO_P6,
+		gpio_3_i				=> IO_P7,
  
 		gpio_4_o				=> out_port_4,
-		gpio_5_o				=> out_port_5,
+		gpio_5_o				=> SevenSegment,
 		gpio_6_o				=> out_port_6, 
-		gpio_7_o				=> out_port_7,
-		gpio_8_o				=> out_port_8
+		gpio_7_o				=> IO_P8,
+		gpio_8_o				=> IO_P9
 	);
-			
-	v: vga port map (
-		clk_i			=> sys_clk,
-		
-		pos_x_i			=> v_pos_x,
-		pos_y_i			=> v_pos_y,
-		chr_i			=> v_chr,
-		clr_i			=> v_clr,
-		write_enable_i	=> v_write_enable,
-		
-		hsync_o			=> HSync,
-		vsync_o			=> VSync,
-		red_o			=> v_red,
-		green_o			=> v_green,
-		blue_o			=> v_blue
-	 );
-	
-	-- Finally - manual signal wirings 
+
+	-- Finally - some manual signal wirings 
 	reset <= not Switch(5); -- it is pull up
 	
 	in_port_1 <= "000" & (not Switch(4 downto 0));
@@ -269,21 +288,6 @@ begin
 	LED(6) <= error;
 	LED(5 downto 0) <= out_port_4(5 downto 0);
 	
-	in_port_0 <= DPSwitch;
-
-	in_port_2 <= IO_P6;
-	in_port_3 <= IO_P7;
-
-	SevenSegment <= out_port_5;
-
 	SevenSegmentEnable(2 downto 0) <= out_port_6(2 downto 0);
-
-	IO_P8 <= out_port_7;
-	IO_P9 <= out_port_8;
-
-	Red <= v_red;
-	Green <= v_green;
-	Blue <= v_blue;
-
 
 end structural;

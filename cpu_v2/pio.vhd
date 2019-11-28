@@ -7,8 +7,8 @@ entity pio is
 		rst_i			: in std_logic;
 		
 		port_address_i	: in std_logic_vector(15 downto 0);
-		data_i			: in std_logic_vector(15 downto 0); -- data entering IO port 
-		data_o			: out std_logic_vector(15 downto 0);
+		data_i			: in std_logic_vector(7 downto 0); -- data entering IO port 
+		data_o			: out std_logic_vector(7 downto 0);
 		write_enable_i	: in std_logic;
 		read_enable_i	: in std_logic;
 		io_ready_o		: out std_logic;

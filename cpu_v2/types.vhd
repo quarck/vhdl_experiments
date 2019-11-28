@@ -19,6 +19,7 @@ package types is
 		FETCH_0, 
 		FETCH_1,
 		FETCH_2,
+		FETCH_3,
 
 		DECODE,
 		
@@ -52,9 +53,6 @@ package types is
 
 		EXECUTE_PORT_OUT_1,
 		EXECUTE_PORT_OUT_2,
-		
-		EXECUTE_SET_XY, 
-		EXECUTE_SET_CHAR,
 		
 		EXECUTE_WAIT_1, 
 		EXECUTE_WAIT_2,
