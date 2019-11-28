@@ -37,7 +37,7 @@ architecture behavioral of vga is
 
 
 	type screen_mem_type is array (0 to 4095) of std_logic_vector(7 downto 0);
-	signal video_chr_memory	: screen_mem_type := (others => x"00");
+	signal video_chr_memory	: screen_mem_type := (others => x"44");
 	signal video_clr_memory	: screen_mem_type := (others => x"ff");
 		
 	attribute ram_style: string;
