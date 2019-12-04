@@ -69,6 +69,7 @@ begin
 	dbg_f_o		<= flags;
 	dbg_ir_o	<= instruction_register;
 
+
 	process (clk_i, reset_i)
 		variable jump_state : cpu_state_type; 
 		variable jump_cond_match : boolean;
