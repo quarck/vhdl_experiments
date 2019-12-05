@@ -90,16 +90,27 @@ begin
 		wait until valid_bytes = 6;
 		wait for clk_period;
 		next_pc <= x"00001";
+		wait for 6 * clk_period;
+		
+		next_pc <= x"00000"; -- going backwards would make it start all over again
 		wait for 4 * clk_period;
+		
 		enable <= '0';
 		wait for 4 * clk_period;
 		enable <= '1';
 		wait until valid_bytes = 6;
 		wait for clk_period;
 		
-		-- do something now.. 
+		next_pc <= x"00004"; 
+		wait until valid_bytes = 6;
+		wait for clk_period;
 		
-		wait for 14 * clk_period;
+		next_pc <= x"0000b"; 
+		wait until valid_bytes = 6;
+		wait for clk_period;
+		
+	
+		wait for 4 * clk_period;
 
 		wait; -- will wait forever
     end process testbench;
